@@ -1,0 +1,20 @@
+{
+  "name": "@oraichain/xrpl-bridge-relayer",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "files": [
+    "build/"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@oraichain/xrpl-bridge-contracts-build": "workspace:^",
+    "@oraichain/xrpl-bridge-contracts-sdk": "workspace:^",
+    "xrpl": "^4.0.0"
+  },
+  "devDependencies": {
+    "@oraichain/cw-simulate": "^2.8.97"
+  }
+}
