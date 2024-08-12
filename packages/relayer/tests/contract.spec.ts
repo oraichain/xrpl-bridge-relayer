@@ -4,19 +4,18 @@ import {
   QueryCustomMsgFunction,
   SimulateCosmWasmClient,
 } from "@oraichain/cw-simulate";
+import { deployContract } from "@oraichain/xrpl-bridge-contracts-build";
 import {
   CwXrplClient,
   CwXrplTypes,
 } from "@oraichain/xrpl-bridge-contracts-sdk";
-import { readFileSync } from "fs";
-import { resolve } from "path";
 import { describe, expect, it } from "vitest";
 import {
   handleTokenFactory,
   queryTokenFactory,
 } from "../src/cw-simulate/tokenfactory";
 import { generateXrplAddress, generateXrplPubkey } from "../src/utils";
-import {deployContract} from '@oraichain/xrpl-bridge-contracts-build'
+import { deployTokenFactory } from "./common";
 
 const handleCustomMsg: HandleCustomMsgFunction = async (sender, msg) => {
   let response = await handleTokenFactory(client, sender, msg);
@@ -37,46 +36,38 @@ const client = new SimulateCosmWasmClient({
 const receiverAddress = "orai1e9rxz3ssv5sqf4n23nfnlh4atv3uf3fs5wgm66";
 const senderAddress = "orai19xtunzaq20unp8squpmfrw8duclac22hd7ves2";
 
-const deployTokenFactory = async () => {
-  const tokenFactoryCode = readFileSync(
-    resolve(__dirname, "testdata", "tokenfactory.wasm")
-  );
-  const { codeId } = await client.upload(
-    senderAddress,
-    tokenFactoryCode,
-    "auto"
-  );
-  const { contractAddress } = await client.instantiate(
-    senderAddress,
-    codeId,
-    {},
-    "tokenfactory"
-  );
-  return contractAddress;
-};
-
 describe("Test contract", () => {
   it("init contract", async () => {
-    const tokenFactoryAddr = await deployTokenFactory();
-    const xrplContract = await deployContract(client, senderAddress, {
-      owner: senderAddress,
-      relayers: [
-        {
-          cosmos_address: senderAddress,
-          xrpl_address: generateXrplAddress(),
-          xrpl_pub_key: generateXrplPubkey(),
-        },
-      ],
-      evidence_threshold: 1,
-      used_ticket_sequence_threshold: 50,
-      trust_set_limit_amount: "1000000000000000000",
-      bridge_xrpl_address: generateXrplAddress(),
-      xrpl_base_fee: 10,
-      token_factory_addr: tokenFactoryAddr,
-      issue_token: true,
-    } as CwXrplTypes.InstantiateMsg, '', 'cw-xrpl');
-    
-    const cwXrpl = new CwXrplClient(client, senderAddress, xrplContract.contractAddress);
+    const tokenFactoryAddr = await deployTokenFactory(client, senderAddress);
+    const xrplContract = await deployContract(
+      client,
+      senderAddress,
+      {
+        owner: senderAddress,
+        relayers: [
+          {
+            cosmos_address: senderAddress,
+            xrpl_address: generateXrplAddress(),
+            xrpl_pub_key: generateXrplPubkey(),
+          },
+        ],
+        evidence_threshold: 1,
+        used_ticket_sequence_threshold: 50,
+        trust_set_limit_amount: "1000000000000000000",
+        bridge_xrpl_address: generateXrplAddress(),
+        xrpl_base_fee: 10,
+        token_factory_addr: tokenFactoryAddr,
+        issue_token: true,
+      } as CwXrplTypes.InstantiateMsg,
+      "",
+      "cw-xrpl"
+    );
+
+    const cwXrpl = new CwXrplClient(
+      client,
+      senderAddress,
+      xrplContract.contractAddress
+    );
 
     await cwXrpl.createCosmosToken({
       subdenom: "UTEST",
