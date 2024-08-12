@@ -10,6 +10,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@oraichain/common": "^1.0.3",
     "@oraichain/xrpl-bridge-contracts-build": "workspace:^",
     "@oraichain/xrpl-bridge-contracts-sdk": "workspace:^",
     "xrpl": "^4.0.0"

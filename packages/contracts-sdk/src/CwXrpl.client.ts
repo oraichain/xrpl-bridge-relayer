@@ -6,7 +6,7 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { StdFee } from "@cosmjs/amino";
-import {Addr, Uint128, InstantiateMsg, Relayer, ExecuteMsg, Evidence, OperationResult, TransactionResult, TokenState, Action, Expiration, Timestamp, Uint64, Cw20Coin, Coin, QueryMsg, MigrateMsg, AvailableTicketsResponse, BridgeState, BridgeStateResponse, Config, CosmosTokensResponse, CosmosToken, FeesCollectedResponse, OwnershipForString, OperationType, PendingOperationsResponse, Operation, Signature, PendingRefundsResponse, PendingRefund, Boolean, ProcessedTxsResponse, ProhibitedXrplAddressesResponse, TransactionEvidence, TransactionEvidencesResponse, XrplTokensResponse, XRPLToken} from "./CwXrpl.types";
+import {Addr, Uint128, InstantiateMsg, Relayer, ExecuteMsg, Evidence, OperationResult, TransactionResult, TokenState, Action, Expiration, Timestamp, Uint64, Cw20Coin, Coin, QueryMsg, MigrateMsg, AvailableTicketsResponse, BridgeState, BridgeStateResponse, Config, CosmosToken, CosmosTokensResponse, FeesCollectedResponse, OwnershipForString, OperationType, PendingOperationsResponse, Operation, Signature, PendingRefundsResponse, PendingRefund, Boolean, ProcessedTxsResponse, ProhibitedXrplAddressesResponse, TransactionEvidence, TransactionEvidencesResponse, XrplTokenResponse, XRPLToken, XrplTokensResponse} from "./CwXrpl.types";
 export interface CwXrplReadOnlyInterface {
   contractAddress: string;
   config: () => Promise<Config>;
@@ -17,6 +17,11 @@ export interface CwXrplReadOnlyInterface {
     limit?: number;
     startAfterKey?: string;
   }) => Promise<XrplTokensResponse>;
+  xrplToken: ({
+    key
+  }: {
+    key: string;
+  }) => Promise<XrplTokenResponse>;
   cosmosTokens: ({
     limit,
     startAfterKey
@@ -24,6 +29,11 @@ export interface CwXrplReadOnlyInterface {
     limit?: number;
     startAfterKey?: string;
   }) => Promise<CosmosTokensResponse>;
+  cosmosToken: ({
+    key
+  }: {
+    key: string;
+  }) => Promise<CosmosToken>;
   pendingOperations: ({
     limit,
     startAfterKey
@@ -83,7 +93,9 @@ export class CwXrplQueryClient implements CwXrplReadOnlyInterface {
     this.contractAddress = contractAddress;
     this.config = this.config.bind(this);
     this.xrplTokens = this.xrplTokens.bind(this);
+    this.xrplToken = this.xrplToken.bind(this);
     this.cosmosTokens = this.cosmosTokens.bind(this);
+    this.cosmosToken = this.cosmosToken.bind(this);
     this.pendingOperations = this.pendingOperations.bind(this);
     this.availableTickets = this.availableTickets.bind(this);
     this.feesCollected = this.feesCollected.bind(this);
@@ -116,6 +128,17 @@ export class CwXrplQueryClient implements CwXrplReadOnlyInterface {
       }
     });
   };
+  xrplToken = async ({
+    key
+  }: {
+    key: string;
+  }): Promise<XrplTokenResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      xrpl_token: {
+        key
+      }
+    });
+  };
   cosmosTokens = async ({
     limit,
     startAfterKey
@@ -127,6 +150,17 @@ export class CwXrplQueryClient implements CwXrplReadOnlyInterface {
       cosmos_tokens: {
         limit,
         start_after_key: startAfterKey
+      }
+    });
+  };
+  cosmosToken = async ({
+    key
+  }: {
+    key: string;
+  }): Promise<CosmosToken> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      cosmos_token: {
+        key
       }
     });
   };

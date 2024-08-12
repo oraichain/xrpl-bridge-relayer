@@ -175,9 +175,17 @@ export type QueryMsg = {
     start_after_key?: string | null;
   };
 } | {
+  xrpl_token: {
+    key: string;
+  };
+} | {
   cosmos_tokens: {
     limit?: number | null;
     start_after_key?: string | null;
+  };
+} | {
+  cosmos_token: {
+    key: string;
   };
 } | {
   pending_operations: {
@@ -239,10 +247,6 @@ export interface Config {
   used_ticket_sequence_threshold: number;
   xrpl_base_fee: number;
 }
-export interface CosmosTokensResponse {
-  last_key?: string | null;
-  tokens: CosmosToken[];
-}
 export interface CosmosToken {
   bridging_fee: Uint128;
   decimals: number;
@@ -251,6 +255,10 @@ export interface CosmosToken {
   sending_precision: number;
   state: TokenState;
   xrpl_currency: string;
+}
+export interface CosmosTokensResponse {
+  last_key?: string | null;
+  tokens: CosmosToken[];
 }
 export interface FeesCollectedResponse {
   fees_collected: Coin[];
@@ -327,10 +335,7 @@ export interface TransactionEvidencesResponse {
   last_key?: string | null;
   transaction_evidences: TransactionEvidence[];
 }
-export interface XrplTokensResponse {
-  last_key?: string | null;
-  tokens: XRPLToken[];
-}
+export type XrplTokenResponse = XRPLToken;
 export interface XRPLToken {
   bridging_fee: Uint128;
   cosmos_denom: string;
@@ -339,4 +344,8 @@ export interface XRPLToken {
   max_holding_amount: Uint128;
   sending_precision: number;
   state: TokenState;
+}
+export interface XrplTokensResponse {
+  last_key?: string | null;
+  tokens: XRPLToken[];
 }

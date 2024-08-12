@@ -16,6 +16,7 @@ import {
   queryTokenFactory,
 } from "../src/cw-simulate/tokenfactory";
 import { generateXrplAddress, generateXrplPubkey } from "../src/utils";
+import {deployContract} from '@oraichain/xrpl-bridge-contracts-build'
 
 const handleCustomMsg: HandleCustomMsgFunction = async (sender, msg) => {
   let response = await handleTokenFactory(client, sender, msg);
@@ -56,12 +57,8 @@ const deployTokenFactory = async () => {
 
 describe("Test contract", () => {
   it("init contract", async () => {
-    const wasmCode = readFileSync(
-      resolve(__dirname, "testdata", "cw-xrpl.wasm")
-    );
-    const { codeId } = await client.upload(senderAddress, wasmCode, "auto");
     const tokenFactoryAddr = await deployTokenFactory();
-    const initMsg = {
+    const xrplContract = await deployContract(client, senderAddress, {
       owner: senderAddress,
       relayers: [
         {
@@ -77,15 +74,9 @@ describe("Test contract", () => {
       xrpl_base_fee: 10,
       token_factory_addr: tokenFactoryAddr,
       issue_token: true,
-    } as CwXrplTypes.InstantiateMsg;
-
-    const { contractAddress } = await client.instantiate(
-      senderAddress,
-      codeId,
-      initMsg,
-      "cw-xrpl"
-    );
-    const cwXrpl = new CwXrplClient(client, senderAddress, contractAddress);
+    } as CwXrplTypes.InstantiateMsg, '', 'cw-xrpl');
+    
+    const cwXrpl = new CwXrplClient(client, senderAddress, xrplContract.contractAddress);
 
     await cwXrpl.createCosmosToken({
       subdenom: "UTEST",
@@ -105,7 +96,7 @@ describe("Test contract", () => {
     expect(coin("100000000", denom)).toEqual(balance);
 
     // Register Cosmos originated token
-    const ret = await cwXrpl.registerCosmosToken({
+    await cwXrpl.registerCosmosToken({
       denom,
       decimals: 6,
       sendingPrecision: 4,
@@ -113,6 +104,10 @@ describe("Test contract", () => {
       bridgingFee: "300000",
     });
 
-    console.dir(ret, { depth: null });
+    const cosmosToken = await cwXrpl.cosmosToken({ key: denom });
+    console.log("cosmos token: ", cosmosToken);
+    expect(cosmosToken.denom).toEqual(denom);
+    expect(cosmosToken.decimals).toEqual(6);
+    expect(cosmosToken.max_holding_amount).toEqual("10000000000");
   });
 });
