@@ -12,3 +12,7 @@ export type BridgeSigners = {
   XRPLPubKeys: { [account: string]: string };
   OraiToXRPLAccount: { [account: string]: string };
 };
+
+export enum XRPLTxResult {
+  Success = "tesSUCCESS",
+}
