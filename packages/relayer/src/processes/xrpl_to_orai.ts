@@ -91,6 +91,18 @@ export default class XrplToOrai {
     switch (txType) {
       case "TicketCreate":
         return this.sendXRPLTicketsAllocationTransactionResultEvidence(tx);
+      case "TrustSet":
+        return this.sendXRPLTrustSetTransactionResultEvidence(tx);
+      case "Payment":
+        return this.sendOraiToXRPLTransferTransactionResultEvidence(tx);
+      case "SignerListSet":
+        return this.sendKeysRotationTransactionResultEvidence(tx);
+      case "AccountSet":
+        console.log(`Skipped expected tx type, txType: ${txType}, tx: ${tx})`);
+        return;
+      default:
+        console.log(`Found unexpected transaction type, tx: ${tx}`);
+        return;
     }
   }
 
@@ -119,7 +131,64 @@ export default class XrplToOrai {
         tx.transaction.TicketSequence;
     }
 
-    let txRex = await this.cwXrplClient.saveEvidence({ evidence });
+    let txRes = await this.cwXrplClient.saveEvidence({ evidence });
+
+    // TODO: verify txResponse
+    return;
+  }
+
+  async sendXRPLTrustSetTransactionResultEvidence(tx: TransactionAndMetadata) {
+    const evidence: Evidence = {
+      xrpl_transaction_result: {
+        transaction_result: this.getTransactionResult(tx),
+        tx_hash: tx.transaction.AccountTxnID,
+        ticket_sequence: tx.transaction.TicketSequence,
+      },
+    };
+
+    let txRes = await this.cwXrplClient.saveEvidence({ evidence });
+
+    // TODO: verify txResponse
+    return;
+  }
+
+  async sendOraiToXRPLTransferTransactionResultEvidence(
+    tx: TransactionAndMetadata
+  ) {
+    const evidence: Evidence = {
+      xrpl_transaction_result: {
+        transaction_result: this.getTransactionResult(tx),
+        tx_hash: tx.transaction.AccountTxnID,
+        ticket_sequence: tx.transaction.TicketSequence,
+      },
+    };
+
+    let txRes = await this.cwXrplClient.saveEvidence({ evidence });
+
+    // TODO: verify txResponse
+    return;
+  }
+
+  async sendKeysRotationTransactionResultEvidence(tx: TransactionAndMetadata) {
+    if (!tx.transaction.Signers || tx.transaction.Signers.length == 0) {
+      console.log(
+        `Skipping the evidence sending for the tx, since the SignerListSet tx was sent initially for the bridge bootstrapping. tx: ${tx}`
+      );
+      return;
+    }
+    const evidence: Evidence = {
+      xrpl_transaction_result: {
+        transaction_result: this.getTransactionResult(tx),
+        tx_hash: tx.transaction.AccountTxnID,
+      },
+    };
+
+    if (tx.transaction?.TicketSequence != 0) {
+      evidence.xrpl_transaction_result.ticket_sequence =
+        tx.transaction.TicketSequence;
+    }
+
+    let txRes = await this.cwXrplClient.saveEvidence({ evidence });
 
     // TODO: verify txResponse
     return;
