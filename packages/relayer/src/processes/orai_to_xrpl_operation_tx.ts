@@ -1,4 +1,5 @@
 import { Operation } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
+import { getMultisigningFee } from "src/xrpl/fee";
 import {
   Amount,
   Payment,
@@ -27,14 +28,11 @@ export function buildTicketCreateTxForMultiSigning(
   } else {
     tx.Sequence = operation.account_sequence;
   }
+
   //   important for the multi-signing
   tx.SigningPubKey = "";
 
-  //   fee, err := xrpl.GetMultiSigningTxFee(operation.XRPLBaseFee)
-  // if err != nil {
-  // 	return nil, err
-  // }
-  // tx.TxBase.Fee = fee
+  tx.Fee = getMultisigningFee(operation.xrpl_base_fee).toFixed(0);
 
   return tx;
 }
@@ -49,14 +47,6 @@ export function buildTrustSetTxForMultiSigning(
   }
   const trustSetType = operation.operation_type.trust_set;
 
-  // TODO: convert local & remote amount
-  // value, err := ConvertCoreumAmountToXRPLAmount(
-  // 	trustSetType.TrustSetLimitAmount,
-  // 	trustSetType.Issuer,
-  // 	trustSetType.Currency,
-  // )
-  //   const value = trustSetType.trust_set_limit_amount;
-
   const tx: TrustSet = {
     TransactionType: "TrustSet",
     LimitAmount: {
@@ -70,11 +60,7 @@ export function buildTrustSetTxForMultiSigning(
   // important for the multi-signing
   tx.SigningPubKey = "";
 
-  // fee, err := xrpl.GetMultiSigningTxFee(operation.XRPLBaseFee)
-  // if err != nil {
-  // 	return nil, err
-  // }
-  // tx.TxBase.Fee = fee
+  tx.Fee = getMultisigningFee(operation.xrpl_base_fee).toFixed(0);
 
   return tx;
 }
@@ -95,21 +81,10 @@ export function buildToXRPLXRPLOriginatedTokenTransferPaymentTxForMultiSigning(
     currency: oraiToXRPLTransferOperationType.currency,
     issuer: oraiToXRPLTransferOperationType.issuer,
   };
-  // amount, err := CoAmountToXRPLAmount(
-  // 	oraiToXRPLTransferOperationType.amount,
-  // 	oraiToXRPLTransferOperationType.issuer,
-  // 	oraiToXRPLTransferOperationType.currency,
-  // )
 
   // if the max amount was provided set it or use nil
   var maxAmount;
   if (oraiToXRPLTransferOperationType.max_amount) {
-    // const convertedMaxAmount := ConvertCoreumAmountToXRPLAmount(
-    // 	oraiToXRPLTransferOperationType.max_amount,
-    // 	oraiToXRPLTransferOperationType.issuer,
-    // 	oraiToXRPLTransferOperationType.currency,
-    // )
-
     maxAmount = {
       value: oraiToXRPLTransferOperationType.max_amount,
       currency: oraiToXRPLTransferOperationType.currency,
@@ -160,11 +135,7 @@ export function buildSignerListSetTxForMultiSigning(
   // important for the multi-signing
   tx.SigningPubKey = "";
 
-  // fee, err := xrpl.GetMultiSigningTxFee(operation.XRPLBaseFee)
-  // if err != nil {
-  // 	return nil, err
-  // }
-  // tx.TxBase.Fee = fee
+  tx.Fee = getMultisigningFee(operation.xrpl_base_fee).toFixed(0);
 
   return tx;
 }
@@ -190,10 +161,6 @@ export function buildPaymentTx(
   // important for the multi-signing
   tx.SigningPubKey = "";
 
-  // fee, err := xrpl.GetMultiSigningTxFee(operation.XRPLBaseFee)
-  // if err != nil {
-  // 	return rippledata.Payment{}, err
-  // }
-  // tx.TxBase.Fee = fee
+  tx.Fee = getMultisigningFee(operation.xrpl_base_fee).toFixed(0);
   return tx;
 }

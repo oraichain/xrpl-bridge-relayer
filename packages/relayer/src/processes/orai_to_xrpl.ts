@@ -1,5 +1,6 @@
 import { CwXrplClient } from "@oraichain/xrpl-bridge-contracts-sdk";
 import { Operation } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
+import { decode } from "ripple-binary-codec";
 import XRPLRpcClient from "src/client/xrpl_rpc";
 import { BridgeSigners, XrplClient } from "src/type";
 import { Signer, SubmittableTransaction } from "xrpl";
@@ -26,7 +27,6 @@ export default class OraiToXrpl {
 
     let bridgeSigners = await this.getBridgeSigners();
 
-    // todo: get bridge signer
     for (let operation of pendingOps.operations) {
       await this.signOrSubmitOperation(operation, bridgeSigners);
     }
@@ -40,9 +40,7 @@ export default class OraiToXrpl {
     const xrplPubKeys: { [account: string]: string } = {};
     const oraiToXRPLAccount: { [account: string]: string } = {};
     for (const relayer of contractConfig.relayers) {
-      // TODO: convert xrpl address to xrpl account
       const xrplAcc = relayer.xrpl_address;
-      // TODO: convert xrpl pubkey to  account pubkey
       const accPubKey = relayer.xrpl_pub_key;
 
       xrplPubKeys[xrplAcc] = accPubKey;
@@ -109,9 +107,7 @@ export default class OraiToXrpl {
     }
 
     // submit tx to XRPL chain
-    const txRes = await this.xrplClient.client.submit(tx, {
-      wallet: this.xrplClient.wallet,
-    });
+    const txRes = await this.xrplClient.client.submit(tx);
 
     //TODO: verify txRes result
   }
@@ -164,7 +160,6 @@ export default class OraiToXrpl {
     return false;
   }
 
-  // TODO
   async buildSubmittableTransaction(
     operation: Operation,
     bridgeSigners: BridgeSigners
@@ -208,8 +203,7 @@ export default class OraiToXrpl {
         },
       };
 
-      const tx = await this.buildXRPLTxFromOperation(operation);
-      // TODO: add signer into tx and validate
+      // TODO: validate tx signatures
 
       txSigners.push(txSigner);
       signedWeight += xrplAccWeight;
@@ -225,20 +219,30 @@ export default class OraiToXrpl {
       return [undefined, false];
     }
     // build tx one more time to be sure that it is not affected
-    const tx = await this.buildXRPLTxFromOperation(operation);
+    const tx = this.buildXRPLTxFromOperation(operation);
 
-    // TODO: add signer into tx and validate
+    // add signer into tx and validate
+    tx.Signers = txSigners;
 
     return [tx, true];
   }
 
-  // TODO
   async registerTxSignature(operation: Operation) {
     const tx = this.buildXRPLTxFromOperation(operation);
-    // TODO: sign and submit signatures to contract bridge
+    // sign and submit signatures to contract bridge
+    const signers: Signer[] = decode(
+      this.xrplClient.wallet.sign(tx, this.bridgeXRPLAddress).tx_blob
+    )?.Signers;
+    // TODO: consider check signers.length == 1
+
+    await this.cwXrplClient.saveSignature({
+      operationId: +operation.id,
+      operationVersion: operation.version,
+      signature: signers[0].Signer.TxnSignature,
+    });
   }
 
-  async buildXRPLTxFromOperation(operation: Operation) {
+  buildXRPLTxFromOperation(operation: Operation) {
     switch (true) {
       case this.isAllocateTicketsOperation(operation):
         return buildTicketCreateTxForMultiSigning(

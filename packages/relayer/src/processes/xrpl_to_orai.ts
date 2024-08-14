@@ -62,7 +62,6 @@ export default class XrplToOrai {
 
     const deliveredXRPLAmount = tx.metadata
       .DeliveredAmount as IssuedCurrencyAmount;
-    // TODO: convert to oraiAmount
     const oraiAmount = deliveredXRPLAmount.value;
     if (oraiAmount == "0") {
       console.log("Nothing to send, amount is zero");
