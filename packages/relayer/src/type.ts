@@ -1,4 +1,4 @@
-import { Client, Wallet } from "xrpl";
+import { Client, TransactionAndMetadata, Wallet } from "xrpl";
 
 export interface XrplClient {
   wallet: Wallet;
@@ -16,3 +16,7 @@ export type BridgeSigners = {
 export enum XRPLTxResult {
   Success = "tesSUCCESS",
 }
+
+export type XrplTransactionAndMetadataWrap = TransactionAndMetadata & {
+  hash: string;
+};

@@ -3,7 +3,11 @@ import {
   Evidence,
   TransactionResult,
 } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
-import { XrplClient, XRPLTxResult } from "src/type";
+import {
+  XrplClient,
+  XrplTransactionAndMetadataWrap,
+  XRPLTxResult,
+} from "src/type";
 import { decodeOraiRecipientFromMemo } from "src/xrpl/memo";
 import {
   isCreatedNode,
@@ -22,7 +26,7 @@ export default class XrplToOrai {
 
   async start() {}
 
-  async processTx(tx: TransactionAndMetadata) {
+  async processTx(tx: XrplTransactionAndMetadataWrap) {
     if (!this.txIsFinal(tx)) {
       console.log(
         `Transaction is not final, txStatus:  ${tx.metadata.TransactionResult})`
@@ -36,7 +40,7 @@ export default class XrplToOrai {
     return this.processIncomingTx(tx);
   }
 
-  async processIncomingTx(tx: TransactionAndMetadata) {
+  async processIncomingTx(tx: XrplTransactionAndMetadataWrap) {
     const txType = tx.transaction.TransactionType;
     if (tx.metadata.TransactionResult != XRPLTxResult.Success) {
       console.log(
@@ -84,7 +88,7 @@ export default class XrplToOrai {
     console.log("Success save evidence");
   }
 
-  async processOutgoingTx(tx: TransactionAndMetadata) {
+  async processOutgoingTx(tx: XrplTransactionAndMetadataWrap) {
     const txType = tx.transaction.TransactionType;
     console.log(`Start processing of XRPL outgoing tx, type: ${txType})`);
     switch (txType) {
@@ -106,7 +110,7 @@ export default class XrplToOrai {
   }
 
   async sendXRPLTicketsAllocationTransactionResultEvidence(
-    tx: TransactionAndMetadata
+    tx: XrplTransactionAndMetadataWrap
   ) {
     const tickets = this.extractTicketSequencesFromMetaData(tx.metadata);
     const txResult = this.getTransactionResult(tx);
@@ -114,7 +118,7 @@ export default class XrplToOrai {
     const evidence: Evidence = {
       xrpl_transaction_result: {
         transaction_result: txResult,
-        tx_hash: tx.transaction.AccountTxnID,
+        tx_hash: tx.hash,
         operation_result: {
           tickets_allocation: { tickets },
         },
@@ -136,11 +140,13 @@ export default class XrplToOrai {
     return;
   }
 
-  async sendXRPLTrustSetTransactionResultEvidence(tx: TransactionAndMetadata) {
+  async sendXRPLTrustSetTransactionResultEvidence(
+    tx: XrplTransactionAndMetadataWrap
+  ) {
     const evidence: Evidence = {
       xrpl_transaction_result: {
         transaction_result: this.getTransactionResult(tx),
-        tx_hash: tx.transaction.AccountTxnID,
+        tx_hash: tx.hash,
         ticket_sequence: tx.transaction.TicketSequence,
       },
     };
@@ -152,12 +158,12 @@ export default class XrplToOrai {
   }
 
   async sendOraiToXRPLTransferTransactionResultEvidence(
-    tx: TransactionAndMetadata
+    tx: XrplTransactionAndMetadataWrap
   ) {
     const evidence: Evidence = {
       xrpl_transaction_result: {
         transaction_result: this.getTransactionResult(tx),
-        tx_hash: tx.transaction.AccountTxnID,
+        tx_hash: tx.hash,
         ticket_sequence: tx.transaction.TicketSequence,
       },
     };
@@ -168,7 +174,9 @@ export default class XrplToOrai {
     return;
   }
 
-  async sendKeysRotationTransactionResultEvidence(tx: TransactionAndMetadata) {
+  async sendKeysRotationTransactionResultEvidence(
+    tx: XrplTransactionAndMetadataWrap
+  ) {
     if (!tx.transaction.Signers || tx.transaction.Signers.length == 0) {
       console.log(
         `Skipping the evidence sending for the tx, since the SignerListSet tx was sent initially for the bridge bootstrapping. tx: ${tx}`
@@ -178,7 +186,7 @@ export default class XrplToOrai {
     const evidence: Evidence = {
       xrpl_transaction_result: {
         transaction_result: this.getTransactionResult(tx),
-        tx_hash: tx.transaction.AccountTxnID,
+        tx_hash: tx.hash,
       },
     };
 
