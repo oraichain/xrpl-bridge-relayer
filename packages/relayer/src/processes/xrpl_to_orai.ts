@@ -9,6 +9,7 @@ import {
   XRPLTxResult,
 } from "src/type";
 import { decodeOraiRecipientFromMemo } from "src/xrpl/memo";
+import XRPLScanner from "src/xrpl/scanner";
 import {
   isCreatedNode,
   IssuedCurrencyAmount,
@@ -18,13 +19,46 @@ import {
 } from "xrpl";
 
 export default class XrplToOrai {
+  scanners: XRPLScanner;
   constructor(
     protected readonly cwXrplClient: CwXrplClient,
     protected readonly xrplClient: XrplClient,
     protected readonly bridgeXRPLAddress: string
-  ) {}
+  ) {
+    this.scanners = new XRPLScanner(xrplClient.client, bridgeXRPLAddress);
+  }
 
-  async start() {}
+  async start() {
+    const processInterval = 3000; // 3s
+
+    while (true) {
+      try {
+        await this.processTransactions();
+      } catch (error) {
+        console.error("error processing block and tx: ", error);
+      }
+      await new Promise((r) => setTimeout(r, processInterval));
+    }
+  }
+
+  async processTransactions() {
+    try {
+      const transactions = await this.scanners.scanTransactions();
+      console.log("unprocessed transactions: ", transactions.length);
+      // since we query our transactions from latest to earliest -> process the latest txs first
+      for (const tx of transactions) {
+        try {
+          await this.processTx(tx);
+        } catch (error) {
+          console.error("error processing transaction: ", error);
+        }
+      }
+    } catch (error) {
+      // reset latestProcessedTxHash so we can start over to prevent missed txs in case of having errors
+      console.error("error querying unprocessed transactions: ", error);
+      return;
+    }
+  }
 
   async processTx(tx: XrplTransactionAndMetadataWrap) {
     if (!this.txIsFinal(tx)) {

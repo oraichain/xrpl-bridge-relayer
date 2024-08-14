@@ -18,6 +18,19 @@ export default class OraiToXrpl {
     protected readonly bridgeXRPLAddress: string
   ) {}
 
+  async start() {
+    const processInterval = 3000; // 3s
+
+    while (true) {
+      try {
+        await this.processPendingOperations();
+      } catch (error) {
+        console.error("error processing block and tx: ", error);
+      }
+      await new Promise((r) => setTimeout(r, processInterval));
+    }
+  }
+
   async processPendingOperations() {
     let pendingOps = await this.cwXrplClient.pendingOperations({});
     if (pendingOps.operations.length == 0) {
@@ -230,9 +243,12 @@ export default class OraiToXrpl {
   async registerTxSignature(operation: Operation) {
     const tx = this.buildXRPLTxFromOperation(operation);
     // sign and submit signatures to contract bridge
-    const signers: Signer[] = decode(
+    const decodedData: any = decode(
       this.xrplClient.wallet.sign(tx, this.bridgeXRPLAddress).tx_blob
-    )?.Signers;
+    );
+    const signers: Signer[] = Array.isArray(decodedData?.Signers)
+      ? decodedData.Signers
+      : [];
     // TODO: consider check signers.length == 1
 
     await this.cwXrplClient.saveSignature({
