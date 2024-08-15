@@ -20,3 +20,7 @@ export enum XRPLTxResult {
 export type XrplTransactionAndMetadataWrap = TransactionAndMetadata & {
   hash: string;
 };
+
+export interface RelayerAction {
+  takeAction: () => Promise<any>;
+}

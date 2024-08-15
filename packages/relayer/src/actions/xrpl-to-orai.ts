@@ -4,6 +4,7 @@ import {
   TransactionResult,
 } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
 import {
+  RelayerAction,
   XrplClient,
   XrplTransactionAndMetadataWrap,
   XRPLTxResult,
@@ -18,7 +19,7 @@ import {
   TransactionMetadataBase,
 } from "xrpl";
 
-export default class XrplToOrai {
+export default class XrplToOrai implements RelayerAction {
   scanners: XRPLScanner;
   constructor(
     protected readonly cwXrplClient: CwXrplInterface,
@@ -33,7 +34,8 @@ export default class XrplToOrai {
     return this;
   }
 
-  async processTransactions() {
+  // process XRPL transactions
+  async takeAction() {
     try {
       const transactions = await this.scanners.scanTransactions();
       console.log("unprocessed transactions: ", transactions.length);

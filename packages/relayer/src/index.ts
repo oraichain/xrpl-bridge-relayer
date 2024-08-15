@@ -1,7 +1,4 @@
-import {
-  ExecuteResult,
-  SigningCosmWasmClient,
-} from "@cosmjs/cosmwasm-stargate";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { OfflineSigner } from "@cosmjs/proto-signing";
 import { GasPrice } from "@cosmjs/stargate";
 import { ORAI } from "@oraichain/common";
@@ -9,27 +6,17 @@ import {
   CwXrplClient,
   CwXrplInterface,
 } from "@oraichain/xrpl-bridge-contracts-sdk";
-import ClaimRelayerFeesAction from "./actions/claim-fees";
-import HaltBridgeAction from "./actions/halt-bridge";
+import { setTimeout } from "timers/promises";
+import { PROCESS_INTERVAL } from "./constants";
+import { RelayerAction } from "./type";
 
 export default class XrplBridgeRelayer {
-  // FIXME: until we find a common interface for relayer actions, let's keep it simple by injecting the dependencies directly
-  private claimRelayerFeesAction: ClaimRelayerFeesAction;
-  private haltBridgeAction: HaltBridgeAction;
+  private relayerActions: RelayerAction[];
 
-  constructor(public readonly client: CwXrplInterface) {
-    this.claimRelayerFeesAction = new ClaimRelayerFeesAction(client);
-    this.haltBridgeAction = new HaltBridgeAction(client);
-  }
+  constructor(public readonly client: CwXrplInterface) {}
 
-  // dep injection, help for testing
-  withClaimRelayerAction(claimRelayerFeesAction: ClaimRelayerFeesAction) {
-    this.claimRelayerFeesAction = claimRelayerFeesAction;
-    return this;
-  }
-
-  withHaltBridgeAction(haltBridgeAction: HaltBridgeAction) {
-    this.haltBridgeAction = haltBridgeAction;
+  withRelayerActions(actions: RelayerAction[]) {
+    this.relayerActions = actions;
     return this;
   }
 
@@ -53,14 +40,11 @@ export default class XrplBridgeRelayer {
   }
 
   async relay() {
-    let actions: Promise<ExecuteResult>[] = [];
-    actions.push(this.claimRelayerFeesAction.takeAction());
-    const results = await Promise.allSettled(actions);
-    for (const result of results) {
-      if (result.status === "rejected") {
-        // TODO: feed to discord
-        console.error(result.reason);
+    while (true) {
+      for (const relayerAction of this.relayerActions) {
+        await relayerAction.takeAction();
       }
+      await setTimeout(PROCESS_INTERVAL);
     }
   }
 }

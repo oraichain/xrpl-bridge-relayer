@@ -1,7 +1,7 @@
 import { CwXrplInterface } from "@oraichain/xrpl-bridge-contracts-sdk";
 import { Operation } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
 import { decode } from "ripple-binary-codec";
-import { BridgeSigners, XrplClient } from "src/type";
+import { BridgeSigners, RelayerAction, XrplClient } from "src/type";
 import XRPLRpcClient from "src/xrpl/xrpl_rpc";
 import { Signer, SubmittableTransaction } from "xrpl";
 import {
@@ -11,14 +11,15 @@ import {
   buildTrustSetTxForMultiSigning,
 } from "./orai-to-xrpl-operation-tx";
 
-export default class OraiToXrpl {
+export default class OraiToXrpl implements RelayerAction {
   constructor(
     protected readonly cwXrplClient: CwXrplInterface,
     protected readonly xrplClient: XrplClient,
     protected readonly bridgeXRPLAddress: string
   ) {}
 
-  async processPendingOperations() {
+  // process pending operations
+  async takeAction() {
     let pendingOps = await this.cwXrplClient.pendingOperations({});
     if (pendingOps.operations.length == 0) {
       console.log("No pending operations to process");
