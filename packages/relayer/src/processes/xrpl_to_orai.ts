@@ -28,19 +28,6 @@ export default class XrplToOrai {
     this.scanners = new XRPLScanner(xrplClient.client, bridgeXRPLAddress);
   }
 
-  async start() {
-    const processInterval = 3000; // 3s
-
-    while (true) {
-      try {
-        await this.processTransactions();
-      } catch (error) {
-        console.error("error processing block and tx: ", error);
-      }
-      await new Promise((r) => setTimeout(r, processInterval));
-    }
-  }
-
   async processTransactions() {
     try {
       const transactions = await this.scanners.scanTransactions();

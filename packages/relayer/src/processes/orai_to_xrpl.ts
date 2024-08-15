@@ -18,19 +18,6 @@ export default class OraiToXrpl {
     protected readonly bridgeXRPLAddress: string
   ) {}
 
-  async start() {
-    const processInterval = 3000; // 3s
-
-    while (true) {
-      try {
-        await this.processPendingOperations();
-      } catch (error) {
-        console.error("error processing block and tx: ", error);
-      }
-      await new Promise((r) => setTimeout(r, processInterval));
-    }
-  }
-
   async processPendingOperations() {
     let pendingOps = await this.cwXrplClient.pendingOperations({});
     if (pendingOps.operations.length == 0) {
@@ -99,10 +86,19 @@ export default class OraiToXrpl {
     operation: Operation,
     bridgeSigners: BridgeSigners
   ) {
-    const valid = this.preValidateOperation(operation);
+    const valid = await this.preValidateOperation(operation);
 
     if (!valid) {
       console.log("Operation is invalid", operation);
+      console.log("Sending invalid tx evidence");
+      await this.cwXrplClient.saveEvidence({
+        evidence: {
+          xrpl_transaction_result: {
+            transaction_result: "invalid",
+            account_sequence: operation.account_sequence,
+          },
+        },
+      });
       return;
     }
     console.log(
@@ -160,16 +156,6 @@ export default class OraiToXrpl {
     console.log(
       `Invalid bridge account sequence, expected ${bridgeXRPLAccInfo.result.account_data.Sequence}, inOperation ${operation.account_sequence}`
     );
-    console.log("Sending invalid tx evidence");
-    await this.cwXrplClient.saveEvidence({
-      evidence: {
-        xrpl_transaction_result: {
-          transaction_result: "invalid",
-          account_sequence: operation.account_sequence,
-        },
-      },
-    });
-
     return false;
   }
 
@@ -249,7 +235,8 @@ export default class OraiToXrpl {
     const signers: Signer[] = Array.isArray(decodedData?.Signers)
       ? decodedData.Signers
       : [];
-    // TODO: consider check signers.length == 1
+    if (signers.length === 0)
+      throw new Error("Empty signer to sign transaction relaying to XRPL");
 
     await this.cwXrplClient.saveSignature({
       operationId: +operation.id,
@@ -295,18 +282,18 @@ export default class OraiToXrpl {
   isTrustSetOperation(operation: Operation): boolean {
     return (
       "trust_set" in operation.operation_type &&
-      operation.operation_type.trust_set.issuer != "" &&
-      operation.operation_type.trust_set.currency != ""
+      !!operation.operation_type.trust_set.issuer &&
+      !!operation.operation_type.trust_set.currency
     );
   }
 
   isCosmosToXRPLTransferOperation(operation: Operation): boolean {
     return (
       "cosmos_to_xrpl_transfer" in operation.operation_type &&
-      operation.operation_type.cosmos_to_xrpl_transfer.issuer != "" &&
-      operation.operation_type.cosmos_to_xrpl_transfer.currency != "" &&
+      !!operation.operation_type.cosmos_to_xrpl_transfer.issuer &&
+      !!operation.operation_type.cosmos_to_xrpl_transfer.currency &&
       operation.operation_type.cosmos_to_xrpl_transfer.amount != "0" &&
-      operation.operation_type.cosmos_to_xrpl_transfer.recipient != ""
+      !!operation.operation_type.cosmos_to_xrpl_transfer.recipient
     );
   }
 

@@ -14,3 +14,5 @@ export const XRPL_CONFIG = {
   // MultiSigningReserveDrops is the reserve locked for the multi-signing account.
   MultiSigningReserveDrops: 2000000,
 };
+
+export const PROCESS_INTERVAL = 3000; // 3s interval
