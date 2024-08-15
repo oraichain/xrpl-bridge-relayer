@@ -1,4 +1,4 @@
-import { CwXrplClient } from "@oraichain/xrpl-bridge-contracts-sdk";
+import { CwXrplInterface } from "@oraichain/xrpl-bridge-contracts-sdk";
 import { Operation } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
 import { decode } from "ripple-binary-codec";
 import { BridgeSigners, XrplClient } from "src/type";
@@ -13,7 +13,7 @@ import {
 
 export default class OraiToXrpl {
   constructor(
-    protected readonly cwXrplClient: CwXrplClient,
+    protected readonly cwXrplClient: CwXrplInterface,
     protected readonly xrplClient: XrplClient,
     protected readonly bridgeXRPLAddress: string
   ) {}

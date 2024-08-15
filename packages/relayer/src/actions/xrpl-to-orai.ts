@@ -1,4 +1,4 @@
-import { CwXrplClient } from "@oraichain/xrpl-bridge-contracts-sdk";
+import { CwXrplInterface } from "@oraichain/xrpl-bridge-contracts-sdk";
 import {
   Evidence,
   TransactionResult,
@@ -21,11 +21,16 @@ import {
 export default class XrplToOrai {
   scanners: XRPLScanner;
   constructor(
-    protected readonly cwXrplClient: CwXrplClient,
+    protected readonly cwXrplClient: CwXrplInterface,
     protected readonly xrplClient: XrplClient,
     protected readonly bridgeXRPLAddress: string
   ) {
     this.scanners = new XRPLScanner(xrplClient.client, bridgeXRPLAddress);
+  }
+
+  withXRPLScanner(xrplScanner: XRPLScanner) {
+    this.scanners = xrplScanner;
+    return this;
   }
 
   async processTransactions() {
