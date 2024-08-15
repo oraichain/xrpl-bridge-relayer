@@ -9,7 +9,7 @@ import {
   buildTicketCreateTxForMultiSigning,
   buildToXRPLXRPLOriginatedTokenTransferPaymentTxForMultiSigning,
   buildTrustSetTxForMultiSigning,
-} from "./orai_to_xrpl_operation_tx";
+} from "./orai-to-xrpl-operation-tx";
 
 export default class OraiToXrpl {
   constructor(
