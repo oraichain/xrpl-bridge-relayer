@@ -68,6 +68,7 @@ export default class OraiToXrpl implements RelayerAction {
       this.xrplClient.client,
       this.bridgeXRPLAddress
     );
+
     const signerList = accountInfo.result.signer_lists;
     if (signerList.length != 1) {
       throw new Error("received unexpected length of the signer list");
@@ -222,6 +223,9 @@ export default class OraiToXrpl implements RelayerAction {
     const tx = this.buildXRPLTxFromOperation(operation);
 
     // add signer into tx and validate
+    // Optimized code for sorting string values
+    txSigners.sort((a, b) => b.Signer.Account.localeCompare(a.Signer.Account));
+
     tx.Signers = txSigners;
 
     return [tx, true];
@@ -240,7 +244,7 @@ export default class OraiToXrpl implements RelayerAction {
       throw new Error("Empty signer to sign transaction relaying to XRPL");
 
     await this.cwXrplClient.saveSignature({
-      operationId: +operation.id,
+      operationId: this.getOperationId(operation),
       operationVersion: operation.version,
       signature: signers[0].Signer.TxnSignature,
     });
@@ -304,5 +308,11 @@ export default class OraiToXrpl implements RelayerAction {
       operation.operation_type.rotate_keys.new_relayers.length != 0 &&
       operation.operation_type.rotate_keys.new_evidence_threshold > 0
     );
+  }
+
+  getOperationId(operation: Operation): number {
+    return operation.ticket_sequence
+      ? operation.ticket_sequence
+      : operation.account_sequence;
   }
 }

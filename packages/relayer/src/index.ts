@@ -7,13 +7,17 @@ import {
   CwXrplInterface,
 } from "@oraichain/xrpl-bridge-contracts-sdk";
 import { setTimeout } from "timers/promises";
+import { Client, Wallet } from "xrpl";
 import { PROCESS_INTERVAL } from "./constants";
-import { RelayerAction } from "./type";
+import { RelayerAction, XrplClient } from "./type";
 
 export default class XrplBridgeRelayer {
   private relayerActions: RelayerAction[];
 
-  constructor(public readonly client: CwXrplInterface) {}
+  constructor(
+    public readonly cwClient: CwXrplInterface,
+    public readonly xrplClient: XrplClient
+  ) {}
 
   withRelayerActions(actions: RelayerAction[]) {
     this.relayerActions = actions;
@@ -21,22 +25,31 @@ export default class XrplBridgeRelayer {
   }
 
   static async connect(
-    rpc: string,
+    oraiRpc: string,
     signer: OfflineSigner,
-    contractAddress: string
+    xrplBridgeAddress: string,
+    xrplClient: Client,
+    xrplWallet: Wallet
   ) {
+    // const oraichain side
     const cosmwasmClient = await SigningCosmWasmClient.connectWithSigner(
-      rpc,
+      oraiRpc,
       signer,
       { gasPrice: GasPrice.fromString(`0.001${ORAI}`) }
     );
     const sender = await signer.getAccounts();
-    const client = new CwXrplClient(
+
+    const oraiClient = new CwXrplClient(
       cosmwasmClient,
       sender[0].address,
-      contractAddress
+      xrplBridgeAddress
     );
-    return new XrplBridgeRelayer(client);
+
+    return new XrplBridgeRelayer(oraiClient, {
+      wallet: xrplWallet,
+      client: xrplClient,
+      relayerAddr: xrplWallet.address,
+    });
   }
 
   async relay() {

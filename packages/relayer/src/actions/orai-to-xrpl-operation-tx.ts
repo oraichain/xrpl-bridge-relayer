@@ -23,7 +23,7 @@ export function buildTicketCreateTxForMultiSigning(
     Account: bridgeXRPLAddress,
   };
 
-  if (operation.ticket_sequence != 0) {
+  if (operation.ticket_sequence) {
     tx.TicketSequence = operation.ticket_sequence;
   } else {
     tx.Sequence = operation.account_sequence;
@@ -127,7 +127,7 @@ export function buildSignerListSetTxForMultiSigning(
 
     SignerEntries: signerEntries,
   };
-  if (operation.ticket_sequence != 0) {
+  if (operation.ticket_sequence) {
     tx.TicketSequence = operation.ticket_sequence;
   } else {
     tx.Sequence = operation.account_sequence;

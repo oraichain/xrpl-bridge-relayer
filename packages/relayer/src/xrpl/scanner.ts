@@ -47,12 +47,3 @@ export default class XRPLScanner {
     return txs;
   }
 }
-
-(async () => {
-  const client = new Client("wss://s.altnet.rippletest.net:51233");
-  await client.connect();
-  const multisigAddr = "rK6GUy3ki2DFxbqe6CyZiSNZvgiUmDBPZU";
-  let scanner = new XRPLScanner(client, multisigAddr);
-  await scanner.scanTransactions();
-  await client.disconnect();
-})();

@@ -5,11 +5,14 @@ export namespace XRPLRpcClient {
     client: Client,
     account: string
   ): Promise<AccountInfoResponse> => {
-    const response = await client.request({
-      command: "account_info",
-      account: account,
-    });
-    return response;
+    const [accountInfo, accountObjs] = await Promise.all([
+      client.request({ command: "account_info", account }),
+      client.request({ command: "account_objects", account }),
+    ]);
+
+    accountInfo.result.signer_lists = accountObjs.result.account_objects as any;
+
+    return accountInfo;
   };
 
   export const accountTransactions = async (
@@ -25,7 +28,6 @@ export namespace XRPLRpcClient {
       ledger_index_min: minLedger,
       ledger_index_max: maxLedger,
       marker,
-      limit: 3,
     });
 
     return response;

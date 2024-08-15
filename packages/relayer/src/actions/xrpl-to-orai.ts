@@ -153,11 +153,11 @@ export default class XrplToOrai implements RelayerAction {
       },
     };
 
-    if (tx.transaction.Sequence != 0) {
+    if (tx.transaction.Sequence) {
       evidence.xrpl_transaction_result.account_sequence =
         tx.transaction.Sequence;
     }
-    if (tx.transaction?.TicketSequence != 0) {
+    if (tx.transaction?.TicketSequence) {
       evidence.xrpl_transaction_result.ticket_sequence =
         tx.transaction.TicketSequence;
     }
@@ -218,7 +218,7 @@ export default class XrplToOrai implements RelayerAction {
       },
     };
 
-    if (tx.transaction?.TicketSequence != 0) {
+    if (tx.transaction?.TicketSequence) {
       evidence.xrpl_transaction_result.ticket_sequence =
         tx.transaction.TicketSequence;
     }
@@ -261,7 +261,7 @@ export default class XrplToOrai implements RelayerAction {
 
       const newFields = createdNode.NewFields;
 
-      if ("ticket" != createdNode.LedgerEntryType) {
+      if ("Ticket" != createdNode.LedgerEntryType) {
         continue;
       }
       const ticketSeq = newFields.TicketSequence;
