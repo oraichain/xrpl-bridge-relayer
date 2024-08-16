@@ -46,7 +46,6 @@ export default class XrplToOrai implements RelayerAction {
         } catch (error) {
           console.error("error processing transaction: ", error);
         }
-        break;
       }
     } catch (error) {
       // reset latestProcessedTxHash so we can start over to prevent missed txs in case of having errors
@@ -112,7 +111,6 @@ export default class XrplToOrai implements RelayerAction {
         tx_hash: tx.hash,
       },
     };
-    console.log(evidence);
 
     let txRes = await this.cwXrplClient.saveEvidence({ evidence });
 
