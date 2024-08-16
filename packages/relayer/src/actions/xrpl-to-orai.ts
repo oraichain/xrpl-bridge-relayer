@@ -9,11 +9,11 @@ import {
   XrplTransactionAndMetadataWrap,
   XRPLTxResult,
 } from "src/type";
+import { convertAmountTOIssuedCurrencyAmount } from "src/xrpl/currency";
 import { decodeOraiRecipientFromMemo } from "src/xrpl/memo";
 import XRPLScanner from "src/xrpl/scanner";
 import {
   isCreatedNode,
-  IssuedCurrencyAmount,
   Payment,
   TransactionAndMetadata,
   TransactionMetadataBase,
@@ -46,6 +46,7 @@ export default class XrplToOrai implements RelayerAction {
         } catch (error) {
           console.error("error processing transaction: ", error);
         }
+        break;
       }
     } catch (error) {
       // reset latestProcessedTxHash so we can start over to prevent missed txs in case of having errors
@@ -92,9 +93,11 @@ export default class XrplToOrai implements RelayerAction {
       return;
     }
 
-    const deliveredXRPLAmount = tx.metadata
-      .DeliveredAmount as IssuedCurrencyAmount;
+    const deliveredXRPLAmount = convertAmountTOIssuedCurrencyAmount(
+      tx.metadata.delivered_amount
+    );
     const oraiAmount = deliveredXRPLAmount.value;
+
     if (oraiAmount == "0") {
       console.log("Nothing to send, amount is zero");
       return;
@@ -106,9 +109,10 @@ export default class XrplToOrai implements RelayerAction {
         currency: deliveredXRPLAmount.currency,
         issuer: deliveredXRPLAmount.issuer,
         recipient: oraiRecipient,
-        tx_hash: tx.transaction.AccountTxnID, // FIXME: use tx_hash instead of accountTxnId
+        tx_hash: tx.hash,
       },
     };
+    console.log(evidence);
 
     let txRes = await this.cwXrplClient.saveEvidence({ evidence });
 

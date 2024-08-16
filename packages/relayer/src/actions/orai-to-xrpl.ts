@@ -70,6 +70,7 @@ export default class OraiToXrpl implements RelayerAction {
     );
 
     const signerList = accountInfo.result.signer_lists;
+
     if (signerList.length != 1) {
       throw new Error("received unexpected length of the signer list");
     }

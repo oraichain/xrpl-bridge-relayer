@@ -10,7 +10,9 @@ export namespace XRPLRpcClient {
       client.request({ command: "account_objects", account }),
     ]);
 
-    accountInfo.result.signer_lists = accountObjs.result.account_objects as any;
+    accountInfo.result.signer_lists = accountObjs.result.account_objects.filter(
+      (item) => item.LedgerEntryType == "SignerList"
+    );
 
     return accountInfo;
   };

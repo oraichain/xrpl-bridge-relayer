@@ -3,7 +3,7 @@ import { Memo } from "xrpl";
 const bridgeMemoType = "oraibridge-xrpl-v1";
 export interface BridgeMemo {
   type: string;
-  oraiRecipient: string;
+  orai_recipient: string;
 }
 
 export function decodeOraiRecipientFromMemo(memos: Memo[]): string {
@@ -19,7 +19,7 @@ export function decodeOraiRecipientFromMemo(memos: Memo[]): string {
       if (bridgeMemo.type != bridgeMemoType) {
         return "";
       }
-      return bridgeMemo.oraiRecipient;
+      return bridgeMemo.orai_recipient;
     } catch (err) {
       continue;
     }
