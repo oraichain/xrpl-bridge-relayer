@@ -32,7 +32,7 @@ export function decodeOraiRecipientFromMemo(memos: Memo[]): string {
 export function encodeOraiRecipientToMemo(oraiRecipient: string): Memo {
   let bridgeMemo: BridgeMemo = {
     type: bridgeMemoType,
-    oraiRecipient,
+    orai_recipient: oraiRecipient,
   };
 
   return {
