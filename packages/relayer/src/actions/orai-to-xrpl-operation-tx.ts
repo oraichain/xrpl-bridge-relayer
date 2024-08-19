@@ -76,20 +76,27 @@ export function buildToXRPLXRPLOriginatedTokenTransferPaymentTxForMultiSigning(
   }
   const oraiToXRPLTransferOperationType =
     operation.operation_type.cosmos_to_xrpl_transfer;
-  const amount: Amount = {
-    value: oraiToXRPLTransferOperationType.amount,
-    currency: oraiToXRPLTransferOperationType.currency,
-    issuer: oraiToXRPLTransferOperationType.issuer,
-  };
+
+  const amount: Amount =
+    oraiToXRPLTransferOperationType.currency == "XRP"
+      ? oraiToXRPLTransferOperationType.amount
+      : {
+          value: oraiToXRPLTransferOperationType.amount,
+          currency: oraiToXRPLTransferOperationType.currency,
+          issuer: oraiToXRPLTransferOperationType.issuer,
+        };
 
   // if the max amount was provided set it or use nil
   var maxAmount;
   if (oraiToXRPLTransferOperationType.max_amount) {
-    maxAmount = {
-      value: oraiToXRPLTransferOperationType.max_amount,
-      currency: oraiToXRPLTransferOperationType.currency,
-      issuer: oraiToXRPLTransferOperationType.issuer,
-    };
+    maxAmount =
+      oraiToXRPLTransferOperationType.currency == "XRP"
+        ? oraiToXRPLTransferOperationType.max_amount
+        : {
+            value: oraiToXRPLTransferOperationType.max_amount,
+            currency: oraiToXRPLTransferOperationType.currency,
+            issuer: oraiToXRPLTransferOperationType.issuer,
+          };
   }
 
   const tx = buildPaymentTx(bridgeXRPLAddress, operation, amount, maxAmount);

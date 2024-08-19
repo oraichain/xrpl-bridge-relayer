@@ -19,7 +19,10 @@ import {
   queryTokenFactory,
 } from "../src/cw-simulate/tokenfactory";
 import XRPLRpcClient from "../src/xrpl/xrpl_rpc";
-import { deployTokenFactory } from "./common";
+import {
+  deployTokenFactory,
+  generateTicketAllocationTransaction,
+} from "./common";
 
 const receiverAddress = "orai1e9rxz3ssv5sqf4n23nfnlh4atv3uf3fs5wgm66";
 const senderAddress = "orai19xtunzaq20unp8squpmfrw8duclac22hd7ves2";
@@ -190,6 +193,14 @@ describe("Orai to xrpl", () => {
     accountWeights[signer3.xrpl.address] = 1;
     vi.spyOn(
       signer1.oraiToXrpl,
+      "getBridgeXRPLSignerAccountsWithWeights"
+    ).mockReturnValue([accountWeights, 2]);
+    vi.spyOn(
+      signer2.oraiToXrpl,
+      "getBridgeXRPLSignerAccountsWithWeights"
+    ).mockReturnValue([accountWeights, 2]);
+    vi.spyOn(
+      signer3.oraiToXrpl,
       "getBridgeXRPLSignerAccountsWithWeights"
     ).mockReturnValue([accountWeights, 2]);
     let bridgeSigners = await signer1.oraiToXrpl?.getBridgeSigners();
@@ -427,6 +438,7 @@ describe("Orai to xrpl", () => {
   it("Test register tx signature", async () => {
     // create ticketSeqOperation
     // init TicketAllocation ops
+    cwXrpl.sender = senderAddress;
     await cwXrpl.recoverTickets({
       accountSequence: 10,
       numberOfTickets: 60,
@@ -440,6 +452,8 @@ describe("Orai to xrpl", () => {
 
     pendingOps = await cwXrpl.pendingOperations({});
     expect(pendingOps.operations[0].signatures.length).toEqual(1);
+    // remove action
+    cwXrpl.sender = senderAddress;
   });
 
   it("Test build submittable transaction", async () => {
@@ -463,9 +477,68 @@ describe("Orai to xrpl", () => {
       pendingOps.operations[0],
       bridgeSigners
     );
-    console.dir(res, { depth: null });
+
     expect(res[1]).toEqual(true);
     expect(res[0].TransactionType).toEqual("TicketCreate");
     expect(res[0].Signers?.length).toEqual(2);
+  });
+
+  it("Test bridge from Orai to Xrpl", async () => {
+    // allocate ticket first
+    // clear all pending ticker allocation tx
+    let pendingOps = await cwXrpl.pendingOperations({});
+    for (let ops of pendingOps.operations) {
+      cwXrpl.sender = senderAddress;
+      await cwXrpl.cancelPendingOperation({
+        operationId: Number(ops.account_sequence),
+      });
+    }
+    // allocate ticket
+    cwXrpl.sender = senderAddress;
+    let tx = generateTicketAllocationTransaction();
+    // init TicketAllocation ops
+    await cwXrpl.recoverTickets({
+      accountSequence: tx.transaction.Sequence || 0,
+      numberOfTickets: 60,
+    });
+    // signer 1, threshold don't reach
+    cwXrpl.sender = signer1.orai;
+    await signer1.xrplToOrai?.processTx(tx);
+    // signer 2, reach threshold
+    cwXrpl.sender = signer2.orai;
+    await signer2.xrplToOrai?.processTx(tx);
+    let xrplDenom = `factory/${tokenFactoryAddr}/XRP`;
+    client.app.bank.setBalance(senderAddress, [
+      { denom: xrplDenom, amount: "1000000000" },
+    ]);
+
+    // send xrp from orai to xrpl
+    cwXrpl.sender = senderAddress;
+
+    await cwXrpl.sendToXrpl(
+      {
+        recipient: "rNY2x1JcUL7bLtKmW1gEDu54YTQu4jjxok",
+      },
+      "auto",
+      undefined,
+      [{ denom: xrplDenom, amount: "10000" }]
+    );
+
+    pendingOps = await cwXrpl.pendingOperations({});
+    expect(pendingOps.operations.length).toEqual(1);
+
+    // submit tx
+    vi.spyOn(xrplClient, "submit").mockReturnValue({} as any);
+
+    // signer1
+    cwXrpl.sender = signer1.orai;
+    await signer1.oraiToXrpl?.takeAction();
+    // signer2
+    cwXrpl.sender = signer2.orai;
+    await signer2.oraiToXrpl?.takeAction();
+
+    // signer 3: no need to  sign
+    cwXrpl.sender = signer3.orai;
+    await signer3.oraiToXrpl?.takeAction();
   });
 });
