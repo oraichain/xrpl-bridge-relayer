@@ -1,4 +1,4 @@
-import { XRPL_CONFIG } from "src/constants";
+import { XRPL_CONFIG } from "../constants";
 
 export function getMultisigningFee(xrplBaseFee: number): number {
   // GetMultiSigningTxFee is static fee we use for the XRPL transaction submission.

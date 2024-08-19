@@ -4,20 +4,20 @@ import {
   TransactionResult,
 } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
 import {
-  RelayerAction,
-  XrplClient,
-  XrplTransactionAndMetadataWrap,
-  XRPLTxResult,
-} from "src/type";
-import { convertAmountTOIssuedCurrencyAmount } from "src/xrpl/currency";
-import { decodeOraiRecipientFromMemo } from "src/xrpl/memo";
-import XRPLScanner from "src/xrpl/scanner";
-import {
   isCreatedNode,
   Payment,
   TransactionAndMetadata,
   TransactionMetadataBase,
 } from "xrpl";
+import { XRPL_ERROR_CODE, XRPLTxResult } from "../constants";
+import {
+  RelayerAction,
+  XrplClient,
+  XrplTransactionAndMetadataWrap,
+} from "../type";
+import { convertAmountToIssuedCurrencyAmount } from "../xrpl/currency";
+import { decodeOraiRecipientFromMemo } from "../xrpl/memo";
+import XRPLScanner from "../xrpl/scanner";
 
 export default class XrplToOrai implements RelayerAction {
   scanners: XRPLScanner;
@@ -92,7 +92,7 @@ export default class XrplToOrai implements RelayerAction {
       return;
     }
 
-    const deliveredXRPLAmount = convertAmountTOIssuedCurrencyAmount(
+    const deliveredXRPLAmount = convertAmountToIssuedCurrencyAmount(
       tx.metadata.delivered_amount
     );
     const oraiAmount = deliveredXRPLAmount.value;
@@ -166,6 +166,9 @@ export default class XrplToOrai implements RelayerAction {
 
     let txRes = await this.cwXrplClient.saveEvidence({ evidence });
 
+    console.log(
+      `Success sendXRPLTicketsAllocationTransactionResultEvidence, txHash:${txRes.transactionHash}`
+    );
     // TODO: verify txResponse
     return;
   }
@@ -183,6 +186,9 @@ export default class XrplToOrai implements RelayerAction {
 
     let txRes = await this.cwXrplClient.saveEvidence({ evidence });
 
+    console.log(
+      `Success sendXRPLTrustSetTransactionResultEvidence, txHash:${txRes.transactionHash}`
+    );
     // TODO: verify txResponse
     return;
   }
@@ -240,8 +246,14 @@ export default class XrplToOrai implements RelayerAction {
   // tefMAX_LEDGER Final when a validated ledger has a ledger index higher than the transaction's LastLedgerSequence
   // field, and no validated ledger includes the transaction.
   txIsFinal(tx: TransactionAndMetadata): boolean {
-    // TODO: detect a tx is final
-    return true;
+    let txResult = tx.metadata.TransactionResult;
+    return (
+      txResult == XRPLTxResult.Success ||
+      txResult.startsWith(XRPL_ERROR_CODE.TecTxResultPrefix) ||
+      txResult.startsWith(XRPL_ERROR_CODE.TemTxResultPrefix) ||
+      txResult === "TefPAST_SEQ" ||
+      txResult == "TefMAX_LEDGER"
+    );
   }
 
   getTransactionResult(tx: TransactionAndMetadata): TransactionResult {

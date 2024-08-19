@@ -1,9 +1,9 @@
 import { CwXrplInterface } from "@oraichain/xrpl-bridge-contracts-sdk";
 import { Operation } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
 import { decode } from "ripple-binary-codec";
-import { BridgeSigners, RelayerAction, XrplClient } from "src/type";
-import XRPLRpcClient from "src/xrpl/xrpl_rpc";
 import { Signer, SubmittableTransaction } from "xrpl";
+import { BridgeSigners, RelayerAction, XrplClient } from "../type";
+import XRPLRpcClient from "../xrpl/xrpl_rpc";
 import {
   buildSignerListSetTxForMultiSigning,
   buildTicketCreateTxForMultiSigning,
@@ -76,13 +76,13 @@ export default class OraiToXrpl implements RelayerAction {
     }
     const signerData = accountInfo.result.signer_lists[0];
     const weightsQuorum = signerData.SignerQuorum;
-    const accountWights: { [account: string]: number } = {};
+    const accountWeights: { [account: string]: number } = {};
     for (let signerEntry of signerData.SignerEntries) {
-      accountWights[signerEntry.SignerEntry.Account] =
+      accountWeights[signerEntry.SignerEntry.Account] =
         signerEntry.SignerEntry.SignerWeight;
     }
 
-    return [accountWights, weightsQuorum];
+    return [accountWeights, weightsQuorum];
   }
 
   async signOrSubmitOperation(
@@ -234,6 +234,7 @@ export default class OraiToXrpl implements RelayerAction {
 
   async registerTxSignature(operation: Operation) {
     const tx = this.buildXRPLTxFromOperation(operation);
+
     // sign and submit signatures to contract bridge
     const decodedData: any = decode(
       this.xrplClient.wallet.sign(tx, this.bridgeXRPLAddress).tx_blob

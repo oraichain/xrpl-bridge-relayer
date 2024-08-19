@@ -1836,6 +1836,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oraichain/cw-simulate@npm:^2.8.98":
+  version: 2.8.98
+  resolution: "@oraichain/cw-simulate@npm:2.8.98"
+  dependencies:
+    "@cosmjs/amino": "npm:^0.31.0"
+    "@cosmjs/cosmwasm-stargate": "npm:^0.31.0"
+    "@cosmjs/crypto": "npm:^0.31.0"
+    "@cosmjs/encoding": "npm:^0.31.0"
+    "@kiruse/serde": "npm:^0.8.0-rc.6"
+    "@oraichain/cosmwasm-vm-js": "npm:^0.2.87"
+    eventemitter3: "npm:^5.0.0"
+    protobufjs: "npm:^7.2.3"
+    ts-results: "npm:^3.3.0"
+    tslib: "npm:^2.6.1"
+  checksum: 10c0/aea09982ae63e2bbebf250b1efb2d8caa996460133e653ea1e5cbc50bb73bc559b82af5eea6c38362c32d318b6416b4960c743e7de647d3fffb1867377826b24
+  languageName: node
+  linkType: hard
+
 "@oraichain/immutable@npm:^4.3.9":
   version: 4.3.9
   resolution: "@oraichain/immutable@npm:4.3.9"
@@ -1870,7 +1888,7 @@ __metadata:
   resolution: "@oraichain/xrpl-bridge-relayer@workspace:packages/relayer"
   dependencies:
     "@oraichain/common": "npm:^1.0.3"
-    "@oraichain/cw-simulate": "npm:^2.8.97"
+    "@oraichain/cw-simulate": "npm:^2.8.98"
     "@oraichain/xrpl-bridge-contracts-build": "workspace:^"
     "@oraichain/xrpl-bridge-contracts-sdk": "workspace:^"
     xrpl: "npm:^4.0.0"

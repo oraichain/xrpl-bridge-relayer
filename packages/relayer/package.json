@@ -16,6 +16,6 @@
     "xrpl": "^4.0.0"
   },
   "devDependencies": {
-    "@oraichain/cw-simulate": "^2.8.97"
+    "@oraichain/cw-simulate": "^2.8.98"
   }
 }

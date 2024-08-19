@@ -1,6 +1,6 @@
 import { Amount, IssuedCurrencyAmount } from "xrpl";
 
-export function convertAmountTOIssuedCurrencyAmount(
+export function convertAmountToIssuedCurrencyAmount(
   amount: Amount
 ): IssuedCurrencyAmount {
   if (typeof amount == "string") {

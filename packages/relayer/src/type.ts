@@ -13,10 +13,6 @@ export type BridgeSigners = {
   OraiToXRPLAccount: { [account: string]: string };
 };
 
-export enum XRPLTxResult {
-  Success = "tesSUCCESS",
-}
-
 export type XrplTransactionAndMetadataWrap = TransactionAndMetadata & {
   hash: string;
 };

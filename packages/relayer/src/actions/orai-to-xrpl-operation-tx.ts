@@ -1,5 +1,4 @@
 import { Operation } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
-import { getMultisigningFee } from "src/xrpl/fee";
 import {
   Amount,
   Payment,
@@ -8,6 +7,7 @@ import {
   TicketCreate,
   TrustSet,
 } from "xrpl";
+import { getMultisigningFee } from "../xrpl/fee";
 
 // BuildTicketCreateTxForMultiSigning builds TicketCreate transaction operation from the contract operation.
 export function buildTicketCreateTxForMultiSigning(

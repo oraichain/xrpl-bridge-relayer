@@ -16,3 +16,14 @@ export const XRPL_CONFIG = {
 };
 
 export const PROCESS_INTERVAL = 3000; // 3s interval
+
+export const XRPL_ERROR_CODE = {
+  // TecTxResultPrefix is `tec` prefix for tx result.
+  TecTxResultPrefix: "tec",
+  // TemTxResultPrefix is `tem` prefix for tx result.
+  TemTxResultPrefix: "tem",
+};
+
+export enum XRPLTxResult {
+  Success = "tesSUCCESS",
+}
