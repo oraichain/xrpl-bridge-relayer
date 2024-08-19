@@ -13,7 +13,10 @@
     "@oraichain/common": "^1.0.3",
     "@oraichain/xrpl-bridge-contracts-build": "workspace:^",
     "@oraichain/xrpl-bridge-contracts-sdk": "workspace:^",
-    "xrpl": "^4.0.0"
+    "discord.js": "^14.14.1",
+    "readline-sync": "^1.4.10",
+    "xrpl": "^4.0.0",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@oraichain/cw-simulate": "^2.8.98"
