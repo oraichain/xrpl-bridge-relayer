@@ -89,7 +89,7 @@ export default async (yargs: Argv) => {
 
   let xrplBridgeAddr = "rK6GUy3ki2DFxbqe6CyZiSNZvgiUmDBPZU";
   let cwBridgeAddr =
-    "orai1xgnnkj2kjplavjx7vn4dqj8jk8l6vj68jm4sk9mhm70y2hj83ars9g9n5x";
+    "orai1rtkh7uzewvpq3uml3hhfmcwrq8l4x85ahch4dp940zlyfqe7m24sxhq0cm";
   let bridgeAdapter = await XrplBridgeRelayer.connect(
     oraiRpcUrl,
     oraiSigner,

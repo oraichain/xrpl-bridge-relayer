@@ -24,9 +24,14 @@ export default class XrplToOrai implements RelayerAction {
   constructor(
     protected readonly cwXrplClient: CwXrplInterface,
     protected readonly xrplClient: XrplClient,
-    protected readonly bridgeXRPLAddress: string
+    protected readonly bridgeXRPLAddress: string,
+    minLedger: number = -1
   ) {
-    this.scanners = new XRPLScanner(xrplClient.client, bridgeXRPLAddress);
+    this.scanners = new XRPLScanner(
+      xrplClient.client,
+      bridgeXRPLAddress,
+      minLedger
+    );
   }
 
   withXRPLScanner(xrplScanner: XRPLScanner) {

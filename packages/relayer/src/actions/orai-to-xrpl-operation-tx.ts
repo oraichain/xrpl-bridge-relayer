@@ -25,13 +25,13 @@ export function buildTicketCreateTxForMultiSigning(
 
   if (operation.ticket_sequence) {
     tx.TicketSequence = operation.ticket_sequence;
+    tx.Sequence = 0;
   } else {
     tx.Sequence = operation.account_sequence;
   }
 
   //   important for the multi-signing
   tx.SigningPubKey = "";
-  tx.Sequence = 0;
 
   tx.Fee = getMultisigningFee(operation.xrpl_base_fee).toFixed(0);
 
