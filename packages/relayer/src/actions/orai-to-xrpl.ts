@@ -190,8 +190,8 @@ export default class OraiToXrpl implements RelayerAction {
     // currently we validate only the allocate tickets operation with not zero sequence
     if (
       !("allocate_tickets" in operation.operation_type) ||
-      operation.operation_type.allocate_tickets.number == 0 ||
-      operation.account_sequence == 0
+      !operation.operation_type.allocate_tickets.number ||
+      !operation.account_sequence
     ) {
       return true;
     }
