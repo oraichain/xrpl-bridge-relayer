@@ -49,7 +49,12 @@ export default class XrplToOrai implements RelayerAction {
       }
     } catch (error) {
       // reset latestProcessedTxHash so we can start over to prevent missed txs in case of having errors
-      console.error("error querying unprocessed transactions: ", error);
+      console.error(
+        "error querying unprocessed transactions xrpl to orai: ",
+        error
+      );
+      // try reconnect
+      await this.xrplClient.client.connect();
       return;
     }
   }

@@ -43,7 +43,10 @@ export default class OraiToXrpl implements RelayerAction {
         }
       }
     } catch (error) {
-      console.error("error querying unprocessed transactions: ", error);
+      console.error(
+        "error querying unprocessed transactions orai to xrpl: ",
+        error
+      );
       return;
     }
   }
