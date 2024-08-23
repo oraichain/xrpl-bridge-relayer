@@ -26,4 +26,7 @@ export const XRPL_ERROR_CODE = {
 
 export enum XRPLTxResult {
   Success = "tesSUCCESS",
+  TefNO_TICKET = "tefNO_TICKET",
+  TefPAST_SEQ = "tefPAST_SEQ",
+  TelINSUF_FEE_P = "telINSUF_FEE_P",
 }

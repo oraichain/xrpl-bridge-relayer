@@ -1,6 +1,7 @@
 import { CwXrplInterface } from "@oraichain/xrpl-bridge-contracts-sdk";
 import { Operation } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
 import { decode } from "ripple-binary-codec";
+import { XRPL_ERROR_CODE, XRPLTxResult } from "src/constants";
 import { Signer, SubmittableTransaction } from "xrpl";
 import { BridgeSigners, RelayerAction, XrplClient } from "../type";
 import XRPLRpcClient from "../xrpl/xrpl_rpc";
@@ -20,16 +21,28 @@ export default class OraiToXrpl implements RelayerAction {
 
   // process pending operations
   async takeAction() {
-    let pendingOps = await this.cwXrplClient.pendingOperations({});
-    if (pendingOps.operations.length == 0) {
-      console.log("No pending operations to process");
+    try {
+      let pendingOps = await this.cwXrplClient.pendingOperations({});
+      if (pendingOps.operations.length == 0) {
+        console.log("No pending operations to process");
+        return;
+      }
+
+      let bridgeSigners = await this.getBridgeSigners();
+
+      for (let operation of pendingOps.operations) {
+        try {
+          await this.signOrSubmitOperation(operation, bridgeSigners);
+        } catch (error) {
+          // continue handle other operation
+          console.log(
+            `Error handle operation ${operation}, got error: ${error}`
+          );
+        }
+      }
+    } catch (error) {
+      console.error("error querying unprocessed transactions: ", error);
       return;
-    }
-
-    let bridgeSigners = await this.getBridgeSigners();
-
-    for (let operation of pendingOps.operations) {
-      await this.signOrSubmitOperation(operation, bridgeSigners);
     }
   }
 
@@ -105,10 +118,12 @@ export default class OraiToXrpl implements RelayerAction {
       return;
     }
     console.log(
-      `Pre-validation of the operation passed, operation is valid, operation, ${operation})`
+      `Pre-validation of the operation passed, operation is valid, operation, ${JSON.stringify(
+        operation
+      )})`
     );
 
-    const [tx, quorumIsReached] = await this.buildSubmittableTransaction(
+    let [tx, quorumIsReached] = await this.buildSubmittableTransaction(
       operation,
       bridgeSigners
     );
@@ -120,8 +135,39 @@ export default class OraiToXrpl implements RelayerAction {
 
     // submit tx to XRPL chain
     const txRes = await this.xrplClient.client.submit(tx);
+    if (txRes.result.engine_result == XRPLTxResult.Success) {
+      console.log(
+        `XRPL multi-sign transaction has been successfully submitted, txHash: ${txRes.result.tx_json.hash}`
+      );
+      return;
+    }
+    // These codes indicate that the transaction failed, but it was applied to a ledger to apply the transaction cost.
+    if (
+      txRes.result.engine_result.startsWith(XRPL_ERROR_CODE.TecTxResultPrefix)
+    ) {
+      console.log(
+        `The transaction has been sent, but will be reverted, code: ${txRes.result.engine_result}`
+      );
+      return;
+    }
 
-    //TODO: verify txRes result
+    switch (txRes.result.engine_result) {
+      case XRPLTxResult.TefNO_TICKET:
+      case XRPLTxResult.TefPAST_SEQ:
+        console.log("Transaction has been already submitted");
+        break;
+      case XRPLTxResult.TelINSUF_FEE_P:
+        console.log(
+          "The Fee from the transaction is not high enough to meet the server's current transaction cost requirement."
+        );
+        break;
+      default:
+        console.log(
+          `failed to submit transaction, received unexpected result, code:${JSON.stringify(
+            txRes
+          )}, tx: ${JSON.stringify(tx)}`
+        );
+    }
   }
 
   // preValidateOperation checks if the operation is valid, and it makes sense to submit the corresponding transaction
@@ -250,6 +296,8 @@ export default class OraiToXrpl implements RelayerAction {
       operationVersion: operation.version,
       signature: signers[0].Signer.TxnSignature,
     });
+
+    console.log(`Success save signature for operation, ${operation}`);
   }
 
   buildXRPLTxFromOperation(operation: Operation) {

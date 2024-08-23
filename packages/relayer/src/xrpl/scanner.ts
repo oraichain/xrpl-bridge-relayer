@@ -42,7 +42,8 @@ export default class XRPLScanner {
       }
       marker = accountTxResult.result.marker;
     }
-    this.minLedger = lastLedger;
+
+    if (lastLedger != -1) this.minLedger = lastLedger + 1;
 
     return txs;
   }

@@ -112,9 +112,8 @@ export default class XrplToOrai implements RelayerAction {
       },
     };
 
-    let txRes = await this.cwXrplClient.saveEvidence({ evidence });
+    await this.cwXrplClient.saveEvidence({ evidence });
 
-    // TODO: check teRes
     console.log("Success save evidence");
   }
 
@@ -169,8 +168,6 @@ export default class XrplToOrai implements RelayerAction {
     console.log(
       `Success sendXRPLTicketsAllocationTransactionResultEvidence, txHash:${txRes.transactionHash}`
     );
-    // TODO: verify txResponse
-    return;
   }
 
   async sendXRPLTrustSetTransactionResultEvidence(
@@ -189,8 +186,6 @@ export default class XrplToOrai implements RelayerAction {
     console.log(
       `Success sendXRPLTrustSetTransactionResultEvidence, txHash:${txRes.transactionHash}`
     );
-    // TODO: verify txResponse
-    return;
   }
 
   async sendOraiToXRPLTransferTransactionResultEvidence(
@@ -206,8 +201,9 @@ export default class XrplToOrai implements RelayerAction {
 
     let txRes = await this.cwXrplClient.saveEvidence({ evidence });
 
-    // TODO: verify txResponse
-    return;
+    console.log(
+      `Success sendOraiToXRPLTransferTransactionResultEvidence, txHash:${txRes.transactionHash}`
+    );
   }
 
   async sendKeysRotationTransactionResultEvidence(
@@ -232,9 +228,9 @@ export default class XrplToOrai implements RelayerAction {
     }
 
     let txRes = await this.cwXrplClient.saveEvidence({ evidence });
-
-    // TODO: verify txResponse
-    return;
+    console.log(
+      `Success sendKeysRotationTransactionResultEvidence, txHash:${txRes.transactionHash}`
+    );
   }
 
   // txIsFinal returns value which indicates whether the transaction if final and can be used.
