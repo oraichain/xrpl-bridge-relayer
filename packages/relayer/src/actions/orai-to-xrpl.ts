@@ -36,7 +36,9 @@ export default class OraiToXrpl implements RelayerAction {
         } catch (error) {
           // continue handle other operation
           console.log(
-            `Error handle operation ${operation}, got error: ${error}`
+            `Error handle operation ${JSON.stringify(
+              operation
+            )}, got error: ${error}`
           );
         }
       }
@@ -251,7 +253,7 @@ export default class OraiToXrpl implements RelayerAction {
         },
       };
 
-      // TODO: validate tx signatures
+      // TODO: validate tx signatures of other signer
 
       txSigners.push(txSigner);
       signedWeight += xrplAccWeight;
@@ -297,7 +299,9 @@ export default class OraiToXrpl implements RelayerAction {
       signature: signers[0].Signer.TxnSignature,
     });
 
-    console.log(`Success save signature for operation, ${operation}`);
+    console.log(
+      `Success save signature for operation, ${JSON.stringify(operation)}`
+    );
   }
 
   buildXRPLTxFromOperation(operation: Operation) {

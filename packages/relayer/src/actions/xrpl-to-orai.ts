@@ -130,10 +130,16 @@ export default class XrplToOrai implements RelayerAction {
       case "SignerListSet":
         return this.sendKeysRotationTransactionResultEvidence(tx);
       case "AccountSet":
-        console.log(`Skipped expected tx type, txType: ${txType}, tx: ${tx})`);
+        console.log(
+          `Skipped expected tx type, txType: ${txType}, tx: ${JSON.stringify(
+            tx
+          )})`
+        );
         return;
       default:
-        console.log(`Found unexpected transaction type, tx: ${tx}`);
+        console.log(
+          `Found unexpected transaction type, tx: ${JSON.stringify(tx)}`
+        );
         return;
     }
   }
@@ -211,7 +217,9 @@ export default class XrplToOrai implements RelayerAction {
   ) {
     if (!tx.transaction.Signers || tx.transaction.Signers.length == 0) {
       console.log(
-        `Skipping the evidence sending for the tx, since the SignerListSet tx was sent initially for the bridge bootstrapping. tx: ${tx}`
+        `Skipping the evidence sending for the tx, since the SignerListSet tx was sent initially for the bridge bootstrapping. tx: ${JSON.stringify(
+          tx
+        )}`
       );
       return;
     }

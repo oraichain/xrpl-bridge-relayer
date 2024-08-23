@@ -87,7 +87,7 @@ export function buildToXRPLXRPLOriginatedTokenTransferPaymentTxForMultiSigning(
         };
 
   // if the max amount was provided set it or use nil
-  var maxAmount;
+  let maxAmount: Amount;
   if (oraiToXRPLTransferOperationType.max_amount) {
     maxAmount =
       oraiToXRPLTransferOperationType.currency == "XRP"
