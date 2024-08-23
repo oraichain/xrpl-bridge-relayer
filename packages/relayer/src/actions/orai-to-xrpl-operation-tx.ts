@@ -31,6 +31,7 @@ export function buildTicketCreateTxForMultiSigning(
 
   //   important for the multi-signing
   tx.SigningPubKey = "";
+  tx.Sequence = 0;
 
   tx.Fee = getMultisigningFee(operation.xrpl_base_fee).toFixed(0);
 
@@ -59,6 +60,7 @@ export function buildTrustSetTxForMultiSigning(
   tx.TicketSequence = operation.ticket_sequence;
   // important for the multi-signing
   tx.SigningPubKey = "";
+  tx.Sequence = 0;
 
   tx.Fee = getMultisigningFee(operation.xrpl_base_fee).toFixed(0);
 
@@ -141,6 +143,7 @@ export function buildSignerListSetTxForMultiSigning(
   }
   // important for the multi-signing
   tx.SigningPubKey = "";
+  tx.Sequence = 0;
 
   tx.Fee = getMultisigningFee(operation.xrpl_base_fee).toFixed(0);
 
