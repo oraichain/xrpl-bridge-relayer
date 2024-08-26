@@ -3,6 +3,7 @@ import {
   Evidence,
   TransactionResult,
 } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
+import { time, WebhookClient } from "discord.js";
 import {
   isCreatedNode,
   Payment,
@@ -25,7 +26,8 @@ export default class XrplToOrai implements RelayerAction {
     protected readonly cwXrplClient: CwXrplInterface,
     protected readonly xrplClient: XrplClient,
     protected readonly bridgeXRPLAddress: string,
-    minLedger: number = -1
+    minLedger: number = -1,
+    protected readonly webhookClient?: WebhookClient
   ) {
     this.scanners = new XRPLScanner(
       xrplClient.client,
@@ -46,9 +48,17 @@ export default class XrplToOrai implements RelayerAction {
       console.log("unprocessed transactions: ", transactions.length);
       // since we query our transactions from latest to earliest -> process the latest txs first
       for (const tx of transactions) {
+        const date: Date = new Date();
         try {
-          await this.processTx(tx);
+          let res = await this.processTx(tx);
+          console.log(res);
+          await this.webhookClient.send(
+            `:receipt:` + res + ` at ${time(date)}`
+          );
         } catch (error) {
+          await this.webhookClient.send(
+            `:red_circle:` + error + ` at ${time(date)}`
+          );
           console.error("error processing transaction: ", error);
         }
       }
@@ -64,12 +74,11 @@ export default class XrplToOrai implements RelayerAction {
     }
   }
 
-  async processTx(tx: XrplTransactionAndMetadataWrap) {
+  async processTx(tx: XrplTransactionAndMetadataWrap): Promise<string> {
     if (!this.txIsFinal(tx)) {
-      console.log(
-        `Transaction is not final, txStatus:  ${tx.metadata.TransactionResult})`
-      );
-      return;
+      let res = `Transaction is not final, txStatus:  ${tx.metadata.TransactionResult})`;
+      // console.log(res);
+      return res;
     }
 
     if (this.bridgeXRPLAddress == tx.transaction.Account) {
@@ -78,28 +87,26 @@ export default class XrplToOrai implements RelayerAction {
     return this.processIncomingTx(tx);
   }
 
-  async processIncomingTx(tx: XrplTransactionAndMetadataWrap) {
+  async processIncomingTx(tx: XrplTransactionAndMetadataWrap): Promise<string> {
     const txType = tx.transaction.TransactionType;
     if (tx.metadata.TransactionResult != XRPLTxResult.Success) {
-      console.log(
-        ` Skipping not successful transaction,type: ${txType}, txResult:  ${tx.metadata.TransactionResult})`
-      );
-      return;
+      let res = ` Skipping not successful transaction,type: ${txType}, txResult:  ${tx.metadata.TransactionResult})`;
+      // console.log(res);
+      return res;
     }
 
     console.log(`Start processing of XRPL incoming tx, type: ${txType}`);
     // we process only incoming payment transactions, other transactions are ignored
     if (txType != "Payment") {
-      console.log(`Skipping not payment transaction, type: ${txType}`);
-      return;
+      let res = `Skipping not payment transaction, type: ${txType}`;
+      return res;
     }
     const paymentTx: Payment = tx.transaction;
     const oraiRecipient = decodeOraiRecipientFromMemo(paymentTx.Memos);
     if (oraiRecipient == "") {
-      console.log(
-        `Bridge memo does not include expected structure, memos: ${paymentTx.Memos})`
-      );
-      return;
+      let res = `Bridge memo does not include expected structure, memos: ${paymentTx.Memos})`;
+      // console.log(res);
+      return res;
     }
 
     const deliveredXRPLAmount = convertAmountToIssuedCurrencyAmount(
@@ -108,8 +115,8 @@ export default class XrplToOrai implements RelayerAction {
     const oraiAmount = deliveredXRPLAmount.value;
 
     if (oraiAmount == "0") {
-      console.log("Nothing to send, amount is zero");
-      return;
+      // console.log("Nothing to send, amount is zero");
+      return "Nothing to send, amount is zero";
     }
 
     const evidence: Evidence = {
@@ -122,12 +129,15 @@ export default class XrplToOrai implements RelayerAction {
       },
     };
 
-    await this.cwXrplClient.saveEvidence({ evidence });
+    let txHash = (await this.cwXrplClient.saveEvidence({ evidence }))
+      .transactionHash;
 
-    console.log("Success save evidence");
+    let res = `Success save evidence, txHash: ${txHash}`;
+    // console.log(res);
+    return res;
   }
 
-  async processOutgoingTx(tx: XrplTransactionAndMetadataWrap) {
+  async processOutgoingTx(tx: XrplTransactionAndMetadataWrap): Promise<string> {
     const txType = tx.transaction.TransactionType;
     console.log(`Start processing of XRPL outgoing tx, type: ${txType})`);
     switch (txType) {
@@ -145,18 +155,19 @@ export default class XrplToOrai implements RelayerAction {
             tx
           )})`
         );
-        return;
+        return "Skipped Account Set tx";
       default:
-        console.log(
-          `Found unexpected transaction type, tx: ${JSON.stringify(tx)}`
-        );
-        return;
+        let res = `Found unexpected transaction type, tx: ${JSON.stringify(
+          tx
+        )}`;
+        // console.log(res);
+        return res;
     }
   }
 
   async sendXRPLTicketsAllocationTransactionResultEvidence(
     tx: XrplTransactionAndMetadataWrap
-  ) {
+  ): Promise<string> {
     const tickets = this.extractTicketSequencesFromMetaData(tx.metadata);
     const txResult = this.getTransactionResult(tx);
 
@@ -181,14 +192,14 @@ export default class XrplToOrai implements RelayerAction {
 
     let txRes = await this.cwXrplClient.saveEvidence({ evidence });
 
-    console.log(
-      `Success sendXRPLTicketsAllocationTransactionResultEvidence, txHash:${txRes.transactionHash}`
-    );
+    let res = `Success sendXRPLTicketsAllocationTransactionResultEvidence, txHash:${txRes.transactionHash}`;
+    // console.log(res);
+    return res;
   }
 
   async sendXRPLTrustSetTransactionResultEvidence(
     tx: XrplTransactionAndMetadataWrap
-  ) {
+  ): Promise<string> {
     const evidence: Evidence = {
       xrpl_transaction_result: {
         transaction_result: this.getTransactionResult(tx),
@@ -199,14 +210,14 @@ export default class XrplToOrai implements RelayerAction {
 
     let txRes = await this.cwXrplClient.saveEvidence({ evidence });
 
-    console.log(
-      `Success sendXRPLTrustSetTransactionResultEvidence, txHash:${txRes.transactionHash}`
-    );
+    let res = `Success sendXRPLTrustSetTransactionResultEvidence, txHash:${txRes.transactionHash}`;
+    // console.log(res);
+    return res;
   }
 
   async sendOraiToXRPLTransferTransactionResultEvidence(
     tx: XrplTransactionAndMetadataWrap
-  ) {
+  ): Promise<string> {
     const evidence: Evidence = {
       xrpl_transaction_result: {
         transaction_result: this.getTransactionResult(tx),
@@ -217,21 +228,20 @@ export default class XrplToOrai implements RelayerAction {
 
     let txRes = await this.cwXrplClient.saveEvidence({ evidence });
 
-    console.log(
-      `Success sendOraiToXRPLTransferTransactionResultEvidence, txHash:${txRes.transactionHash}`
-    );
+    let res = `Success sendOraiToXRPLTransferTransactionResultEvidence, txHash:${txRes.transactionHash}`;
+    // console.log(res);
+    return res;
   }
 
   async sendKeysRotationTransactionResultEvidence(
     tx: XrplTransactionAndMetadataWrap
   ) {
     if (!tx.transaction.Signers || tx.transaction.Signers.length == 0) {
-      console.log(
-        `Skipping the evidence sending for the tx, since the SignerListSet tx was sent initially for the bridge bootstrapping. tx: ${JSON.stringify(
-          tx
-        )}`
-      );
-      return;
+      let res = `Skipping the evidence sending for the tx, since the SignerListSet tx was sent initially for the bridge bootstrapping. tx: ${JSON.stringify(
+        tx
+      )}`;
+      // console.log(res);
+      return res;
     }
     const evidence: Evidence = {
       xrpl_transaction_result: {
@@ -246,9 +256,9 @@ export default class XrplToOrai implements RelayerAction {
     }
 
     let txRes = await this.cwXrplClient.saveEvidence({ evidence });
-    console.log(
-      `Success sendKeysRotationTransactionResultEvidence, txHash:${txRes.transactionHash}`
-    );
+    let res = `Success sendKeysRotationTransactionResultEvidence, txHash:${txRes.transactionHash}`;
+    // console.log(res);
+    return res;
   }
 
   // txIsFinal returns value which indicates whether the transaction if final and can be used.

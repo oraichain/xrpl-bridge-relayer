@@ -6,6 +6,7 @@ import {
   CwXrplClient,
   CwXrplInterface,
 } from "@oraichain/xrpl-bridge-contracts-sdk";
+import { WebhookClient } from "discord.js";
 import { setTimeout } from "timers/promises";
 import { Client, Wallet } from "xrpl";
 import { Argv } from "yargs";
@@ -72,11 +73,11 @@ export default async (yargs: Argv) => {
     process.env.XRPL_SERVER || "wss://s.altnet.rippletest.net:51233";
   console.log(xrplServer);
 
-  // const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
-  // const webhookClient = new WebhookClient({
-  //   url: discordWebhookUrl,
-  // });
+  const webhookClient = new WebhookClient({
+    url: discordWebhookUrl,
+  });
 
   const oraiSigner = await getOraiSigner();
   if (typeof oraiSigner === "string") {
@@ -102,12 +103,15 @@ export default async (yargs: Argv) => {
   let oraiToXrplAction = new OraiToXrpl(
     bridgeAdapter.cwClient,
     bridgeAdapter.xrplClient,
-    xrplBridgeAddr
+    xrplBridgeAddr,
+    webhookClient
   );
   let xrplToOraiAction = new XrplToOrai(
     bridgeAdapter.cwClient,
     bridgeAdapter.xrplClient,
-    xrplBridgeAddr
+    xrplBridgeAddr,
+    -1,
+    webhookClient
   );
 
   bridgeAdapter.withRelayerActions([xrplToOraiAction, oraiToXrplAction]);

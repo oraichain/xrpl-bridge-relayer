@@ -1,5 +1,6 @@
 import { CwXrplInterface } from "@oraichain/xrpl-bridge-contracts-sdk";
 import { Operation } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
+import { time, WebhookClient } from "discord.js";
 import { decode } from "ripple-binary-codec";
 import { Signer, SubmittableTransaction } from "xrpl";
 import { XRPL_ERROR_CODE, XRPLTxResult } from "../constants";
@@ -16,7 +17,8 @@ export default class OraiToXrpl implements RelayerAction {
   constructor(
     protected readonly cwXrplClient: CwXrplInterface,
     protected readonly xrplClient: XrplClient,
-    protected readonly bridgeXRPLAddress: string
+    protected readonly bridgeXRPLAddress: string,
+    protected readonly webhookClient?: WebhookClient
   ) {}
 
   // process pending operations
@@ -28,18 +30,30 @@ export default class OraiToXrpl implements RelayerAction {
         return;
       }
 
+      console.log("Pending operations: ", pendingOps.operations.length);
+
       let bridgeSigners = await this.getBridgeSigners();
 
       for (let operation of pendingOps.operations) {
+        const date: Date = new Date();
         try {
-          await this.signOrSubmitOperation(operation, bridgeSigners);
+          let res = await this.signOrSubmitOperation(operation, bridgeSigners);
+          console.log(res);
+          await this.webhookClient.send(
+            `:receipt:` + res + ` at ${time(date)}`
+          );
         } catch (error) {
+          await this.webhookClient.send(
+            `:red_circle:` + error + ` at ${time(date)}`
+          );
           // continue handle other operation
           console.log(
             `Error handle operation ${JSON.stringify(
               operation
             )}, got error: ${error}`
           );
+          // try reconnect
+          await this.xrplClient.client.connect();
         }
       }
     } catch (error) {
@@ -106,21 +120,26 @@ export default class OraiToXrpl implements RelayerAction {
   async signOrSubmitOperation(
     operation: Operation,
     bridgeSigners: BridgeSigners
-  ) {
+  ): Promise<string> {
     const valid = await this.preValidateOperation(operation);
 
     if (!valid) {
       console.log("Operation is invalid", operation);
       console.log("Sending invalid tx evidence");
-      await this.cwXrplClient.saveEvidence({
-        evidence: {
-          xrpl_transaction_result: {
-            transaction_result: "invalid",
-            account_sequence: operation.account_sequence,
+      let txHash = (
+        await this.cwXrplClient.saveEvidence({
+          evidence: {
+            xrpl_transaction_result: {
+              transaction_result: "invalid",
+              account_sequence: operation.account_sequence,
+            },
           },
-        },
-      });
-      return;
+        })
+      ).transactionHash;
+      let res = `Success send invalid tx evidence, operations: ${JSON.stringify(
+        operation
+      )}, txHash: ${txHash}`;
+      return res;
     }
     console.log(
       `Pre-validation of the operation passed, operation is valid, operation, ${JSON.stringify(
@@ -134,45 +153,40 @@ export default class OraiToXrpl implements RelayerAction {
     );
 
     if (!quorumIsReached) {
-      await this.registerTxSignature(operation);
-      return;
+      return await this.registerTxSignature(operation);
     }
 
     // submit tx to XRPL chain
     const txRes = await this.xrplClient.client.submit(tx);
     if (txRes.result.engine_result == XRPLTxResult.Success) {
-      console.log(
-        `XRPL multi-sign transaction has been successfully submitted, txHash: ${txRes.result.tx_json.hash}`
-      );
-      return;
+      let res = `XRPL multi-sign transaction has been successfully submitted, txHash: ${txRes.result.tx_json.hash}`;
+      return res;
     }
+
     // These codes indicate that the transaction failed, but it was applied to a ledger to apply the transaction cost.
     if (
       txRes.result.engine_result.startsWith(XRPL_ERROR_CODE.TecTxResultPrefix)
     ) {
-      console.log(
-        `The transaction has been sent, but will be reverted, code: ${txRes.result.engine_result}`
-      );
-      return;
+      let res = `The transaction has been sent, but will be reverted, code: ${txRes.result.engine_result}`;
+      return res;
     }
 
+    let res;
     switch (txRes.result.engine_result) {
       case XRPLTxResult.TefNO_TICKET:
       case XRPLTxResult.TefPAST_SEQ:
-        console.log("Transaction has been already submitted");
+        res = "Transaction has been already submitted";
         break;
       case XRPLTxResult.TelINSUF_FEE_P:
-        console.log(
-          "The Fee from the transaction is not high enough to meet the server's current transaction cost requirement."
-        );
+        res =
+          "The Fee from the transaction is not high enough to meet the server's current transaction cost requirement.";
         break;
       default:
-        console.log(
-          `failed to submit transaction, received unexpected result, code:${JSON.stringify(
-            txRes
-          )}, tx: ${JSON.stringify(tx)}`
-        );
+        res = `failed to submit transaction, received unexpected result, code:${JSON.stringify(
+          txRes
+        )}, tx: ${JSON.stringify(tx)}`;
     }
+    return res;
   }
 
   // preValidateOperation checks if the operation is valid, and it makes sense to submit the corresponding transaction
@@ -283,7 +297,7 @@ export default class OraiToXrpl implements RelayerAction {
     return [tx, true];
   }
 
-  async registerTxSignature(operation: Operation) {
+  async registerTxSignature(operation: Operation): Promise<string> {
     const tx = this.buildXRPLTxFromOperation(operation);
 
     // sign and submit signatures to contract bridge
@@ -296,15 +310,18 @@ export default class OraiToXrpl implements RelayerAction {
     if (signers.length === 0)
       throw new Error("Empty signer to sign transaction relaying to XRPL");
 
-    await this.cwXrplClient.saveSignature({
-      operationId: this.getOperationId(operation),
-      operationVersion: operation.version,
-      signature: signers[0].Signer.TxnSignature,
-    });
+    let txHas = (
+      await this.cwXrplClient.saveSignature({
+        operationId: this.getOperationId(operation),
+        operationVersion: operation.version,
+        signature: signers[0].Signer.TxnSignature,
+      })
+    ).transactionHash;
 
-    console.log(
-      `Success save signature for operation, ${JSON.stringify(operation)}`
-    );
+    let res = `Success save signature for operation, ${JSON.stringify(
+      operation
+    )}, txHash: ${txHas}`;
+    return res;
   }
 
   buildXRPLTxFromOperation(operation: Operation) {
