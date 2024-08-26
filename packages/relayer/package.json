@@ -1,19 +1,25 @@
 {
   "name": "@oraichain/xrpl-bridge-relayer",
   "version": "1.0.0",
-  "main": "build/index.js",
+  "main": "dist/index.js",
+  "bin": {
+    "xrplRelayer": "dist/index.js"
+  },
+  "author": "Oraichain Labs",
   "files": [
-    "build/"
+    "dist/index.js"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "esbuild src/index.ts  --bundle --minify --platform=node  --external:fsevents --external:shelljs --log-level=error --outfile=dist/index.js"
   },
   "license": "MIT",
   "dependencies": {
     "@oraichain/common": "^1.0.3",
     "@oraichain/xrpl-bridge-contracts-build": "workspace:^",
     "@oraichain/xrpl-bridge-contracts-sdk": "workspace:^",
+    "@types/yargs": "^17.0.32",
     "discord.js": "^14.14.1",
+    "esbuild": "^0.20.2",
     "readline-sync": "^1.4.10",
     "xrpl": "^4.0.0",
     "yargs": "^17.7.2"
