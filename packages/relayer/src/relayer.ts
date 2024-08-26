@@ -72,8 +72,8 @@ export class XrplBridgeRelayer {
 }
 
 export default async (yargs: Argv) => {
-  const oraiRpcUrl = process.env.ORAI_RPC_URL ?? "https://rpc.orai.io";
-  const xrplServer = process.env.XRPL_SERVER ?? "wss://xrplcluster.com/";
+  const oraiRpcUrl = process.env.ORAI_RPC_URL || "https://rpc.orai.io";
+  const xrplServer = process.env.XRPL_SERVER || "wss://xrplcluster.com/";
   const lastLedger = Number(process.env.LAST_LEDGER) || -1;
 
   const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
