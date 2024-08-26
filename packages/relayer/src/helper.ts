@@ -75,9 +75,37 @@ export const getOraiSigner = async (): Promise<OfflineSigner | string> => {
   }
 };
 
-export const getXRPLWallet = (): Wallet => {
-  return Wallet.fromSeed(
-    process.env.XRPL_SEED ||
-      decryptMnemonic("enter ton passphrase: ", process.env.XRPL_SEED_ENCRYPTED)
-  );
-};
+export function getXRPLWallet(): Wallet {
+  const {
+    XRPL_SEED,
+    XRPL_SEED_ENCRYPTED,
+    XRPL_MNEMONIC_ENCRYPTED,
+    XRPL_SECRET_ENCRYPTED,
+  } = process.env;
+  let wallet: Wallet;
+
+  switch (true) {
+    case !!XRPL_SEED:
+      wallet = Wallet.fromSeed(XRPL_SEED);
+      break;
+    case !!XRPL_SEED_ENCRYPTED:
+      wallet = Wallet.fromSeed(
+        decryptMnemonic("enter xrpl passphrase: ", XRPL_SEED_ENCRYPTED)
+      );
+      break;
+    case !!XRPL_MNEMONIC_ENCRYPTED:
+      wallet = Wallet.fromMnemonic(
+        decryptMnemonic("enter xrpl passphrase: ", XRPL_MNEMONIC_ENCRYPTED)
+      );
+      break;
+    case !!XRPL_SECRET_ENCRYPTED:
+      wallet = Wallet.fromSecret(
+        decryptMnemonic("enter xrpl passphrase: ", XRPL_SECRET_ENCRYPTED)
+      );
+      break;
+    default:
+      throw new Error("Only support xrpl seed, mnemonic, secret");
+  }
+
+  return wallet;
+}
