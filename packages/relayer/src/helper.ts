@@ -44,8 +44,11 @@ export const fetchRetry = async (
   }
 };
 
-export const decryptMnemonic = (encryptedMnemonic: string) => {
-  const password = readlineSync.question("enter passphrase:", {
+export const decryptMnemonic = (
+  question: string,
+  encryptedMnemonic: string
+) => {
+  const password = readlineSync.question(question, {
     hideEchoBack: true,
   });
   return decrypt(password, encryptedMnemonic);
@@ -54,7 +57,11 @@ export const decryptMnemonic = (encryptedMnemonic: string) => {
 export const getOraiSigner = async (): Promise<OfflineSigner | string> => {
   try {
     const wallet = await DirectSecp256k1HdWallet.fromMnemonic(
-      process.env.MNEMONIC ?? decryptMnemonic(process.env.MNEMONIC_ENCRYPTED),
+      process.env.MNEMONIC ??
+        decryptMnemonic(
+          "enter orai passphrase: ",
+          process.env.MNEMONIC_ENCRYPTED
+        ),
       {
         hdPaths: [stringToPath(process.env.HD_PATH || "m/44'/118'/0'/0/0")],
         prefix: "orai",
@@ -70,6 +77,7 @@ export const getOraiSigner = async (): Promise<OfflineSigner | string> => {
 
 export const getXRPLWallet = (): Wallet => {
   return Wallet.fromSeed(
-    process.env.XRPL_SEED || decryptMnemonic(process.env.XRPL_SEED_ENCRYPTED)
+    process.env.XRPL_SEED ||
+      decryptMnemonic("enter ton passphrase: ", process.env.XRPL_SEED_ENCRYPTED)
   );
 };
