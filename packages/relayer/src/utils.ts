@@ -1,4 +1,4 @@
-import { generateSeed, deriveKeypair, deriveAddress } from 'ripple-keypairs';
+import { deriveAddress, deriveKeypair, generateSeed } from "ripple-keypairs";
 
 export const generateXrplPubkey = (): string => {
   const seed = generateSeed();

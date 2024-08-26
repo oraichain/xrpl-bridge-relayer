@@ -1,7 +1,8 @@
 import { toDisplay } from "@oraichain/common";
 import { CwXrplInterface } from "@oraichain/xrpl-bridge-contracts-sdk";
+import { RelayerAction } from "src/type";
 
-export default class ClaimRelayerFeesAction {
+export default class ClaimRelayerFeesAction implements RelayerAction {
   private readonly MIN_RELAYER_FEES_TO_CLAIM = 1; // 1*10^6
 
   constructor(private readonly client: CwXrplInterface) {}
