@@ -1,8 +1,8 @@
 import { CwXrplInterface } from "@oraichain/xrpl-bridge-contracts-sdk";
 import { Operation } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
 import { decode } from "ripple-binary-codec";
-import { XRPL_ERROR_CODE, XRPLTxResult } from "src/constants";
 import { Signer, SubmittableTransaction } from "xrpl";
+import { XRPL_ERROR_CODE, XRPLTxResult } from "../constants";
 import { BridgeSigners, RelayerAction, XrplClient } from "../type";
 import XRPLRpcClient from "../xrpl/xrpl_rpc";
 import {

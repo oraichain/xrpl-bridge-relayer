@@ -356,6 +356,7 @@ describe("Orai to xrpl", () => {
         TicketSequence: 10,
         SigningPubKey: "",
         Fee: "330",
+        Sequence: 0,
       },
     ],
     [
@@ -389,6 +390,7 @@ describe("Orai to xrpl", () => {
         TicketSequence: 10,
         SigningPubKey: "",
         Fee: "330",
+        Sequence: 0,
       },
     ],
     [
