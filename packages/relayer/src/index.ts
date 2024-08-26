@@ -6,7 +6,7 @@ import { hideBin } from "yargs/helpers";
 import relay from "./relayer";
 
 yargs(hideBin(process.argv))
-  .scriptName("oraclePriceFeeds")
+  .scriptName("xrplRelayer")
   .config("env", (path) => {
     return dotenv.config({ path }).parsed ?? {};
   })
