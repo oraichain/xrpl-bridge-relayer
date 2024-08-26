@@ -63,20 +63,18 @@ export class XrplBridgeRelayer {
         for (const relayerAction of this.relayerActions) {
           await relayerAction.takeAction();
         }
-        await setTimeout(PROCESS_INTERVAL);
       } catch (err) {
         console.log(err);
       }
+      await setTimeout(PROCESS_INTERVAL);
     }
   }
 }
 
 export default async (yargs: Argv) => {
   const oraiRpcUrl = process.env.RPC_URL ?? "https://rpc.orai.io";
-  const xrplServer =
-    process.env.XRPL_SERVER || "wss://s.altnet.rippletest.net:51233";
+  const xrplServer = process.env.XRPL_SERVER ?? "wss://xrplcluster.com/";
   const lastLedger = Number(process.env.LAST_LEDGER) || -1;
-  console.log(xrplServer);
 
   const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
@@ -93,9 +91,9 @@ export default async (yargs: Argv) => {
   await xrplClient.connect();
   let xrplWallet = getXRPLWallet();
 
-  let xrplBridgeAddr = "rK6GUy3ki2DFxbqe6CyZiSNZvgiUmDBPZU";
-  let cwBridgeAddr =
-    "orai1rtkh7uzewvpq3uml3hhfmcwrq8l4x85ahch4dp940zlyfqe7m24sxhq0cm";
+  let xrplBridgeAddr = process.env.XRPL_MULTISIG;
+  let cwBridgeAddr = process.env.CW_BRIDGE_ADDRESS;
+
   let bridgeAdapter = await XrplBridgeRelayer.connect(
     oraiRpcUrl,
     oraiSigner,
