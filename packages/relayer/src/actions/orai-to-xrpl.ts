@@ -52,8 +52,6 @@ export default class OraiToXrpl implements RelayerAction {
               operation
             )}, got error: ${error}`
           );
-          // try reconnect
-          await this.xrplClient.client.connect();
         }
       }
     } catch (error) {
@@ -61,6 +59,8 @@ export default class OraiToXrpl implements RelayerAction {
         "error querying unprocessed transactions orai to xrpl: ",
         error
       );
+      // try reconnect
+      await this.xrplClient.client.connect();
       return;
     }
   }
