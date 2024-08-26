@@ -1,6 +1,6 @@
 {
   "name": "@oraichain/xrpl-bridge-relayer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/index.js",
   "bin": {
     "xrplRelayer": "dist/index.js"
@@ -13,6 +13,10 @@
     "build": "esbuild src/index.ts  --bundle --minify --platform=node  --external:fsevents --external:shelljs --log-level=error --outfile=dist/index.js"
   },
   "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "dependencies": {
     "@oraichain/common": "^1.0.3",
     "@oraichain/xrpl-bridge-contracts-build": "workspace:^",
