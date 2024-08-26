@@ -1,6 +1,6 @@
 {
   "name": "@oraichain/xrpl-bridge-relayer",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "dist/index.js",
   "bin": {
     "xrplRelayer": "dist/index.js"
