@@ -60,7 +60,7 @@ export const getOraiSigner = async (): Promise<OfflineSigner | string> => {
       process.env.MNEMONIC ??
         decryptMnemonic(
           "enter orai passphrase: ",
-          process.env.MNEMONIC_ENCRYPTED
+          process.env.ORAI_MNEMONIC_ENCRYPTED
         ),
       {
         hdPaths: [stringToPath(process.env.HD_PATH || "m/44'/118'/0'/0/0")],
