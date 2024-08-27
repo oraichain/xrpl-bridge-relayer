@@ -6,7 +6,9 @@ export interface BridgeMemo {
   orai_recipient: string;
 }
 
-export function decodeOraiRecipientFromMemo(memos: Memo[]): string {
+export function decodeOraiRecipientFromMemo(memos?: Memo[]): string {
+  if (memos == undefined) return "";
+
   for (let memo of memos) {
     if (memo.Memo.MemoData.length == 0) {
       continue;
