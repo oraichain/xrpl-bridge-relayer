@@ -129,10 +129,9 @@ export default class XrplToOrai implements RelayerAction {
       },
     };
 
-    let txHash = (await this.cwXrplClient.saveEvidence({ evidence }))
-      .transactionHash;
+    let txHash = await this.saveEvidence(evidence);
 
-    let res = `Success save evidence, txHash: ${txHash}`;
+    let res = `Success save evidence for tx bridge from XRPL to ORAI, txHash: ${txHash}`;
     // console.log(res);
     return res;
   }
@@ -190,9 +189,9 @@ export default class XrplToOrai implements RelayerAction {
         tx.transaction.TicketSequence;
     }
 
-    let txRes = await this.cwXrplClient.saveEvidence({ evidence });
+    let txHash = await this.saveEvidence(evidence);
 
-    let res = `Success sendXRPLTicketsAllocationTransactionResultEvidence, txHash:${txRes.transactionHash}`;
+    let res = `Success sendXRPLTicketsAllocationTransactionResultEvidence, txHash:${txHash}`;
     // console.log(res);
     return res;
   }
@@ -208,9 +207,9 @@ export default class XrplToOrai implements RelayerAction {
       },
     };
 
-    let txRes = await this.cwXrplClient.saveEvidence({ evidence });
+    let txHash = await this.saveEvidence(evidence);
 
-    let res = `Success sendXRPLTrustSetTransactionResultEvidence, txHash:${txRes.transactionHash}`;
+    let res = `Success sendXRPLTrustSetTransactionResultEvidence, txHash:${txHash}`;
     // console.log(res);
     return res;
   }
@@ -226,9 +225,9 @@ export default class XrplToOrai implements RelayerAction {
       },
     };
 
-    let txRes = await this.cwXrplClient.saveEvidence({ evidence });
+    let txHash = await this.saveEvidence(evidence);
 
-    let res = `Success sendOraiToXRPLTransferTransactionResultEvidence, txHash:${txRes.transactionHash}`;
+    let res = `Success sendOraiToXRPLTransferTransactionResultEvidence, txHash:${txHash}`;
     // console.log(res);
     return res;
   }
@@ -255,8 +254,8 @@ export default class XrplToOrai implements RelayerAction {
         tx.transaction.TicketSequence;
     }
 
-    let txRes = await this.cwXrplClient.saveEvidence({ evidence });
-    let res = `Success sendKeysRotationTransactionResultEvidence, txHash:${txRes.transactionHash}`;
+    let txHash = await this.saveEvidence(evidence);
+    let res = `Success sendKeysRotationTransactionResultEvidence, txHash:${txHash}`;
     // console.log(res);
     return res;
   }
@@ -309,5 +308,21 @@ export default class XrplToOrai implements RelayerAction {
       ticketSequences.push(Number(ticketSeq));
     }
     return ticketSequences;
+  }
+
+  async saveEvidence(evidence: Evidence): Promise<string> {
+    let numAttempts = 0;
+
+    while (numAttempts < 3) {
+      try {
+        return (await this.cwXrplClient.saveEvidence({ evidence }))
+          .transactionHash;
+      } catch (err) {
+        numAttempts++;
+        if (numAttempts === 3) {
+          throw new Error(err);
+        }
+      }
+    }
   }
 }
