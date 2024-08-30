@@ -6,7 +6,7 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { StdFee } from "@cosmjs/amino";
-import {Addr, Uint128, InstantiateMsg, Relayer, ExecuteMsg, Evidence, OperationResult, TransactionResult, TokenState, Action, Expiration, Timestamp, Uint64, Cw20Coin, Coin, QueryMsg, MigrateMsg, AvailableTicketsResponse, BridgeState, BridgeStateResponse, Config, CosmosToken, CosmosTokensResponse, FeesCollectedResponse, OwnershipForString, OperationType, PendingOperationsResponse, Operation, Signature, PendingRefundsResponse, PendingRefund, Boolean, ProcessedTxsResponse, ProhibitedXrplAddressesResponse, TransactionEvidence, TransactionEvidencesResponse, XrplTokenResponse, XRPLToken, XrplTokensResponse} from "./CwXrpl.types";
+import {Addr, Uint128, InstantiateMsg, Relayer, ExecuteMsg, Evidence, OperationResult, TransactionResult, TokenState, Action, Expiration, Timestamp, Uint64, Cw20Coin, Coin, QuotaMsg, QueryMsg, BridgeState, MigrateMsg, AvailableTicketsResponse, BridgeStateResponse, Config, CosmosToken, CosmosTokensResponse, FeesCollectedResponse, OwnershipForString, OperationType, PendingOperationsResponse, Operation, Signature, PendingRefundsResponse, PendingRefund, Boolean, ProcessedTxsResponse, ProhibitedXrplAddressesResponse, TransactionEvidence, TransactionEvidencesResponse, XrplTokenResponse, XRPLToken, XrplTokensResponse} from "./CwXrpl.types";
 export interface CwXrplReadOnlyInterface {
   contractAddress: string;
   config: () => Promise<Config>;
@@ -281,19 +281,11 @@ export interface CwXrplInterface extends CwXrplReadOnlyInterface {
   contractAddress: string;
   sender: string;
   createCosmosToken: ({
-    decimals,
-    description,
     initialBalances,
-    name,
-    subdenom,
-    symbol
+    subdenom
   }: {
-    decimals: number;
-    description?: string;
     initialBalances: Cw20Coin[];
-    name?: string;
     subdenom: string;
-    symbol?: string;
   }, _fee?: number | StdFee | "auto", _memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
   mintCosmosToken: ({
     denom,
@@ -425,6 +417,30 @@ export interface CwXrplInterface extends CwXrplReadOnlyInterface {
   }: {
     operationId: number;
   }, _fee?: number | StdFee | "auto", _memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  updateUsedTicketSequenceThreshold: ({
+    usedTicketSequenceThreshold
+  }: {
+    usedTicketSequenceThreshold: number;
+  }, _fee?: number | StdFee | "auto", _memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  addRateLimit: ({
+    quotas,
+    xrplDenom
+  }: {
+    quotas: QuotaMsg[];
+    xrplDenom: string;
+  }, _fee?: number | StdFee | "auto", _memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  removeRateLimit: ({
+    xrplDenom
+  }: {
+    xrplDenom: string;
+  }, _fee?: number | StdFee | "auto", _memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
+  resetRateLimitQuota: ({
+    quotaId,
+    xrplDenom
+  }: {
+    quotaId: string;
+    xrplDenom: string;
+  }, _fee?: number | StdFee | "auto", _memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
   updateOwnership: (action: Action, _fee?: number | StdFee | "auto", _memo?: string, _funds?: Coin[]) => Promise<ExecuteResult>;
 }
 export class CwXrplClient extends CwXrplQueryClient implements CwXrplInterface {
@@ -456,32 +472,24 @@ export class CwXrplClient extends CwXrplQueryClient implements CwXrplInterface {
     this.rotateKeys = this.rotateKeys.bind(this);
     this.updateProhibitedXrplAddresses = this.updateProhibitedXrplAddresses.bind(this);
     this.cancelPendingOperation = this.cancelPendingOperation.bind(this);
+    this.updateUsedTicketSequenceThreshold = this.updateUsedTicketSequenceThreshold.bind(this);
+    this.addRateLimit = this.addRateLimit.bind(this);
+    this.removeRateLimit = this.removeRateLimit.bind(this);
+    this.resetRateLimitQuota = this.resetRateLimitQuota.bind(this);
     this.updateOwnership = this.updateOwnership.bind(this);
   }
 
   createCosmosToken = async ({
-    decimals,
-    description,
     initialBalances,
-    name,
-    subdenom,
-    symbol
+    subdenom
   }: {
-    decimals: number;
-    description?: string;
     initialBalances: Cw20Coin[];
-    name?: string;
     subdenom: string;
-    symbol?: string;
   }, _fee: number | StdFee | "auto" = "auto", _memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       create_cosmos_token: {
-        decimals,
-        description,
         initial_balances: initialBalances,
-        name,
-        subdenom,
-        symbol
+        subdenom
       }
     }, _fee, _memo, _funds);
   };
@@ -740,6 +748,56 @@ export class CwXrplClient extends CwXrplQueryClient implements CwXrplInterface {
     return await this.client.execute(this.sender, this.contractAddress, {
       cancel_pending_operation: {
         operation_id: operationId
+      }
+    }, _fee, _memo, _funds);
+  };
+  updateUsedTicketSequenceThreshold = async ({
+    usedTicketSequenceThreshold
+  }: {
+    usedTicketSequenceThreshold: number;
+  }, _fee: number | StdFee | "auto" = "auto", _memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      update_used_ticket_sequence_threshold: {
+        used_ticket_sequence_threshold: usedTicketSequenceThreshold
+      }
+    }, _fee, _memo, _funds);
+  };
+  addRateLimit = async ({
+    quotas,
+    xrplDenom
+  }: {
+    quotas: QuotaMsg[];
+    xrplDenom: string;
+  }, _fee: number | StdFee | "auto" = "auto", _memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      add_rate_limit: {
+        quotas,
+        xrpl_denom: xrplDenom
+      }
+    }, _fee, _memo, _funds);
+  };
+  removeRateLimit = async ({
+    xrplDenom
+  }: {
+    xrplDenom: string;
+  }, _fee: number | StdFee | "auto" = "auto", _memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      remove_rate_limit: {
+        xrpl_denom: xrplDenom
+      }
+    }, _fee, _memo, _funds);
+  };
+  resetRateLimitQuota = async ({
+    quotaId,
+    xrplDenom
+  }: {
+    quotaId: string;
+    xrplDenom: string;
+  }, _fee: number | StdFee | "auto" = "auto", _memo?: string, _funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      reset_rate_limit_quota: {
+        quota_id: quotaId,
+        xrpl_denom: xrplDenom
       }
     }, _fee, _memo, _funds);
   };

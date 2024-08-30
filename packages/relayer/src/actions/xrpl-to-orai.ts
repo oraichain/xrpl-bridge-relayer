@@ -102,7 +102,7 @@ export default class XrplToOrai implements RelayerAction {
       return res;
     }
     const paymentTx: Payment = tx.transaction;
-    const oraiRecipient = decodeOraiRecipientFromMemo(paymentTx.Memos);
+    const [oraiRecipient, memo] = decodeOraiRecipientFromMemo(paymentTx.Memos);
     if (oraiRecipient == "") {
       let res = `Bridge memo does not include expected structure, memos: ${paymentTx.Memos})`;
       // console.log(res);
@@ -126,6 +126,7 @@ export default class XrplToOrai implements RelayerAction {
         issuer: deliveredXRPLAmount.issuer,
         recipient: oraiRecipient,
         tx_hash: tx.hash,
+        memo,
       },
     };
 
@@ -236,9 +237,7 @@ export default class XrplToOrai implements RelayerAction {
     tx: XrplTransactionAndMetadataWrap
   ) {
     if (!tx.transaction.Signers || tx.transaction.Signers.length == 0) {
-      let res = `Skipping the evidence sending for the tx, since the SignerListSet tx was sent initially for the bridge bootstrapping. tx: ${JSON.stringify(
-        tx
-      )}`;
+      let res = `Skipping the evidence sending for the tx, since the SignerListSet tx was sent initially for the bridge bootstrapping`;
       // console.log(res);
       return res;
     }

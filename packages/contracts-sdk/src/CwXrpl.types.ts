@@ -4,7 +4,9 @@ export interface InstantiateMsg {
   bridge_xrpl_address: string;
   evidence_threshold: number;
   issue_token: boolean;
+  osor_entry_point?: Addr | null;
   owner: Addr;
+  rate_limit_addr?: Addr | null;
   relayers: Relayer[];
   token_factory_addr: Addr;
   trust_set_limit_amount: Uint128;
@@ -18,12 +20,8 @@ export interface Relayer {
 }
 export type ExecuteMsg = {
   create_cosmos_token: {
-    decimals: number;
-    description?: string | null;
     initial_balances: Cw20Coin[];
-    name?: string | null;
     subdenom: string;
-    symbol?: string | null;
   };
 } | {
   mint_cosmos_token: {
@@ -118,6 +116,24 @@ export type ExecuteMsg = {
     operation_id: number;
   };
 } | {
+  update_used_ticket_sequence_threshold: {
+    used_ticket_sequence_threshold: number;
+  };
+} | {
+  add_rate_limit: {
+    quotas: QuotaMsg[];
+    xrpl_denom: string;
+  };
+} | {
+  remove_rate_limit: {
+    xrpl_denom: string;
+  };
+} | {
+  reset_rate_limit_quota: {
+    quota_id: string;
+    xrpl_denom: string;
+  };
+} | {
   update_ownership: Action;
 };
 export type Evidence = {
@@ -125,6 +141,7 @@ export type Evidence = {
     amount: Uint128;
     currency: string;
     issuer: string;
+    memo?: string | null;
     recipient: Addr;
     tx_hash: string;
   };
@@ -166,6 +183,12 @@ export interface Cw20Coin {
 export interface Coin {
   amount: Uint128;
   denom: string;
+}
+export interface QuotaMsg {
+  duration: number;
+  max_receive: Uint128;
+  max_send: Uint128;
+  name: string;
 }
 export type QueryMsg = {
   config: {};
@@ -229,11 +252,22 @@ export type QueryMsg = {
 } | {
   ownership: {};
 };
-export interface MigrateMsg {}
+export type BridgeState = "active" | "halted";
+export interface MigrateMsg {
+  bridge_state: BridgeState;
+  bridge_xrpl_address: string;
+  evidence_threshold: number;
+  osor_entry_point?: Addr | null;
+  rate_limit_addr?: Addr | null;
+  relayers: Relayer[];
+  token_factory_addr: Addr;
+  trust_set_limit_amount: Uint128;
+  used_ticket_sequence_threshold: number;
+  xrpl_base_fee: number;
+}
 export interface AvailableTicketsResponse {
   tickets: number[];
 }
-export type BridgeState = "active" | "halted";
 export interface BridgeStateResponse {
   state: BridgeState;
 }
@@ -241,6 +275,8 @@ export interface Config {
   bridge_state: BridgeState;
   bridge_xrpl_address: string;
   evidence_threshold: number;
+  osor_entry_point?: Addr | null;
+  rate_limit_addr?: Addr | null;
   relayers: Relayer[];
   token_factory_addr: Addr;
   trust_set_limit_amount: Uint128;
