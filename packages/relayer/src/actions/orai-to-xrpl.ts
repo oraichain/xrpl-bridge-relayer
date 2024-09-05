@@ -2,7 +2,7 @@ import { CwXrplInterface } from "@oraichain/xrpl-bridge-contracts-sdk";
 import { Operation } from "@oraichain/xrpl-bridge-contracts-sdk/build/CwXrpl.types";
 import { time, WebhookClient } from "discord.js";
 import { decode } from "ripple-binary-codec";
-import { Signer, SubmittableTransaction } from "xrpl";
+import { multisign, Signer, SubmittableTransaction } from "xrpl";
 import { XRPL_ERROR_CODE, XRPLTxResult } from "../constants";
 import { BridgeSigners, RelayerAction, XrplClient } from "../type";
 import XRPLRpcClient from "../xrpl/xrpl_rpc";
@@ -157,7 +157,7 @@ export default class OraiToXrpl implements RelayerAction {
     }
 
     // submit tx to XRPL chain
-    const txRes = await this.xrplClient.client.submit(tx);
+    const txRes = await this.xrplClient.client.submit(multisign([tx]));
     if (txRes.result.engine_result == XRPLTxResult.Success) {
       let res = `XRPL multi-sign transaction has been successfully submitted, txHash: ${txRes.result.tx_json.hash}`;
       return res;
@@ -287,10 +287,6 @@ export default class OraiToXrpl implements RelayerAction {
     }
     // build tx one more time to be sure that it is not affected
     const tx = this.buildXRPLTxFromOperation(operation);
-
-    // add signer into tx and validate
-    // Optimized code for sorting string values
-    txSigners.sort((a, b) => b.Signer.Account.localeCompare(a.Signer.Account));
 
     tx.Signers = txSigners;
 
